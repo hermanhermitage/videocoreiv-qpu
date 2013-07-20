@@ -119,7 +119,16 @@ Where:
 </pre>
 
 
-#### Large Immediates:
+#### Move Immediate:
 <pre>
+  movi[&lt;addcc&gt;] &lt;ra&gt;, data [setf] ; movi[&lt;mulcc&gt;] &lt;rb&gt; [setf]
+  movi[&lt;addcc&gt;] &lt;rb&gt;, data [setf] ; movi[&lt;mulcc&gt;] &lt;ra&gt; [setf]  
 </pre>
-
+<pre>
+  data:32, 1110 unknown:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
+</pre>
+Where:
+<pre>
+  data is constant to be loaded.
+  addcc, mulcc, F, X, wa and wb as above.
+</pre>
