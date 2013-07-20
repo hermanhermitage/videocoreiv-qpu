@@ -65,10 +65,10 @@ as stipulated in the license:
   &lt;addop&gt;&lt;addcc&gt; wa, radda, raddb [setf] ; &lt;mulop&gt;&lt;mulcc&gt; wb, rmula, rmulb [setf] ; &lt;op&gt;
   &lt;addop&gt;&lt;addcc&gt; wb, radda, raddb [setf] ; &lt;mulop&gt;&lt;mulcc&gt; wa, rmula, rmulb [setf] ; &lt;op&gt;
   
-  radda = ra | r0..r5
-  raddb = rb | r0..r5
-  rmula = ra | r0..r5
-  rmulb = rb | r0..r5
+  radda = ra | ra >> shift | imm6 | rb | r0..r5
+  raddb = rb | ra >> shift | imm6 | rb | r0..r5
+  rmula = ra | ra >> shift | imm6 | rb | r0..r5
+  rmulb = rb | ra >> shift | imm6 | rb | r0..r5
 </pre>
 
 Encoding:
