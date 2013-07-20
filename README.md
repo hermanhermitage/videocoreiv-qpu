@@ -63,7 +63,7 @@ as stipulated in the license:
 #### Add/Mul Operations:
 <pre>
   mulop:3 addop:5 ra:6 rb:6 adda:3 addb:3 mula:3 mulb:3, op:4 packbits:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
-<pre>
+</pre>
 
 Where:
 <pre>
