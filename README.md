@@ -90,7 +90,34 @@ Where:
 
 #### Branches:
 <pre>
+  addr:32, 1111 0000 cond:4 relative:1 register:1 ra:5 X:1 wa:6 wb:6
 </pre>
+Where:
+<pre>
+  addr is the target address (relative if <relative> is 1)
+
+  cond is the condition code:
+    0000 all zero set
+    0001 all zero clear
+    0010 any zero set
+    0011 any zero clear
+    0100 all negative set
+    0101 all negative clear
+    0110 any negative set
+    0111 any negative clear
+    1000 all carry set
+    1001 all carry clear
+    1010 any carry set
+    1011 any carry clear
+    xxxx unknown
+
+  relative is set if the target is relative.
+  register is set if the target should be addr + ra
+
+  X, wa, wb are used to write the return address to a register
+    (ie. branch and link).
+</pre>
+
 
 #### Large Immediates:
 <pre>
