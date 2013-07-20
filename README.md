@@ -45,3 +45,14 @@ as stipulated in the license:
   * [US20110227920](http://www.google.com/patents/US20110227920)	Method and System for a Shader Processor With Closely Couple Peripherals
   * [US20110242113](http://www.google.com/patents/US20110242113)	Method and System for Processing Pixels Utilizing Scoreboarding
   * [US20110261059](http://www.google.com/patents/US20110261059)	Method and System for Decomposing Complex Shapes Into Curvy RHTS For Rasterization
+
+### QPU Instruction Set
+* Fixed length instruction word of 64 bits.
+* Instructions contain multiple issue slots.
+* There is a slot for the **Add vector ALU** and **Multiply vector ALU**.
+* Registers written in one cycle, should not be read back for 1 instruction cycle.
+* Branch instructions have 3 delay slots.
+* Thread switching is handled by (cooperative) thread switch instructions.
+* Program may be terminated by instruction with program end signal, two delay slots will be executed before the unit becomes idle.
+
+### Instruction Encodings
