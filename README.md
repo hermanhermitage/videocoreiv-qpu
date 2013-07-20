@@ -12,23 +12,27 @@ Runs ThreadX OS, and generally coordinates all functional blocks such as video c
 
 Let's focus on the QPU here.
 
-### Note:
 <pre>
-For the analysis undertaken in this repository we are going to operate on the following assumption:
+Disclaimer:
+
+There is good precedent in Copyright Law for the following assumption:
 - Given, an input I, with copyright holder C(I)
 - a program or algorithm A with copyright holder C(A)
 - a program output O, given by O=A(I)
+that C(O) = C(I), given C(A) injects no artistic work during the operation of A().
 
-we will assume C(O) = C(I), provided C(A) itself injects no artistic work during the operation of A().
+We aim to feed different inputs into functions provided by the blob, and
+document and analyse the outputs - without violating copyright law.
 
-The reason for this is we will use differential analysis.  We will feed various inputs such as
-shader programs into the blob via entry points (such as provided by OpenGL ES) and observe the 
-outputs.  At all times we will obey:
+We will feed various inputs such as shader programs into the blob via entry
+points (such as provided by OpenGL ES) and observe the outputs.
 
+At all times we will obey:
   "This software may only be used for the purposes of developing for, 
     running or using a Raspberry Pi device."
 
-as stipulated in the license: https://github.com/raspberrypi/firmware/blob/master/boot/LICENCE.broadcom.
+as stipulated in the license: 
+   https://github.com/raspberrypi/firmware/blob/master/boot/LICENCE.broadcom.
 </pre>
 
 ### Key Patent Applications
