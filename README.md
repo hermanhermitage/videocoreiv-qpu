@@ -40,5 +40,4 @@ as stipulated in the license: https://github.com/raspberrypi/firmware/blob/maste
   * [US20110221743](http://www.google.com/patents/US20110221743)	Method and System for Controlling a 3d Processor Using a Control List in Memory
   * [US20110227920](http://www.google.com/patents/US20110227920)	Method and System for a Shader Processor With Closely Couple Peripherals
   * [US20110242113](http://www.google.com/patents/US20110242113)	Method and System for Processing Pixels Utilizing Scoreboarding
-  * [US20110242344](http://www.google.com/patents/US20110242344)	Method and System for Determining How to Handle Processing of an Image Based Motion
   * [US20110261059](http://www.google.com/patents/US20110261059)	Method and System for Decomposing Complex Shapes Into Curvy RHTS For Rasterization
