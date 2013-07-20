@@ -60,10 +60,13 @@ as stipulated in the license:
 
 ### Instruction Encodings
 
-Add/Mul Operations:
+#### Add/Mul Operations:
 <pre>
   mulop:3 addop:5 ra:6 rb:6 adda:3 addb:3 mula:3 mulb:3, op:4 packbits:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
-  
+<pre>
+
+Where:
+<pre>
   op is the signaling or control flow operation.
   mulop is the multiplcation ALU operation.
   addop is the add ALU operation.
@@ -79,17 +82,17 @@ Add/Mul Operations:
   wa is destination for the add or mul result (depends on X).
   wb is destination for the add or mul result (depends on X).
   
-  Registers addresses ra0..ra31 are registers, whilst addresses ra32..ra63 are peripheral or math unit addresses.
-  Registers addresses rb0..rb31 are registers, whilst addresses rb32..rb63 are peripheral or math unit addresses.
+  Registers addresses ra0..ra31 are registers, whilst addresses ra32..ra63 are peripheral addresses.
+  Registers addresses rb0..rb31 are registers, whilst addresses rb32..rb63 are peripheral addresses.
   Similarly for wa, except addresses 32...35 write back to accumulators a0...a3
   Similarly for wb, except addresses 32...35 write back to accumulators a0...a3
 </pre>
 
-Branches:
+#### Branches:
 <pre>
 </pre>
 
-Load Immediates:
+#### Large Immediates:
 <pre>
 </pre>
 
