@@ -94,7 +94,7 @@ Where:
 </pre>
 Where:
 <pre>
-  addr is the target address (relative if <relative> is 1)
+  addr is the target address
 
   cond is the condition code:
     0000 all zero set
