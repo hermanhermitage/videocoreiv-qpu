@@ -56,3 +56,7 @@ as stipulated in the license:
 * Program may be terminated by instruction with program end signal, two delay slots will be executed before the unit becomes idle.
 
 ### Instruction Encodings
+<pre>
+  sop:4 ... , mulop:3 addop:5 ... adda:3 addb:3 mula:3 mulb:3
+</pre>
+
