@@ -62,33 +62,65 @@ as stipulated in the license:
 
 #### Add/Mul Operations:
 <pre>
+  &lt;addop&gt;&lt;addcc&gt; wa, radda, raddb [setf] ; &lt;mulop&gt;&lt;mulcc&gt; wb, rmula, rmulb [setf] ; &lt;op&gt;
+  &lt;addop&gt;&lt;addcc&gt; wb, radda, raddb [setf] ; &lt;mulop&gt;&lt;mulcc&gt; wa, rmula, rmulb [setf] ; &lt;op&gt;
+  
+  radda = ra | r0..r5
+  raddb = rb | r0..r5
+  rmula = ra | r0..r5
+  rmulb = rb | r0..r5
+</pre>
+
+Encoding:
+<pre>
   mulop:3 addop:5 ra:6 rb:6 adda:3 addb:3 mula:3 mulb:3, op:4 packbits:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
 </pre>
 
 Where:
 <pre>
   op is the signaling or control flow operation.
-  mulop is the multiplcation ALU operation.
+
+  mulop is the multiplication ALU operation.
   addop is the add ALU operation.
-  ra is register bank A value to read.
-  rb is register bank V value to read.
+  
   adda, addb encode which accumulator or ra, rb value will be supplied to the add ALU.
-  mula, mulb encode which accumulator or ra, rb value will be supplied to the multiplciation ALU.
+  mula, mulb encode which accumulator or ra, rb value will be supplied to the multiplication ALU.
+  
   packbits control the packing/unpacking operation.
+  
   addcc holds the cc predicate for conditional execution of the add instruction.
   mulcc holds the cc predicate for conditional execution of the mul instruction.
-  F is set to update cc flags (there are Zero, Negative and Carry flags per unit).
+    000 never
+    001 always
+    010 zero set
+    011 zero clear
+    100 negative set
+    101 negative clear
+    110 carry set
+    111 carry clear
+    
+  F is set to update cc flags (there are Zero, Negative and Carry flags per unit) - SETF
   X is set to exchange values on the writeback (ie the crossed lines in the diagram).
+
+  ra is register bank A value to read.
+  rb is register bank V value to read.
   wa is destination for the add or mul result (depends on X).
   wb is destination for the add or mul result (depends on X).
-  
-  Registers addresses ra0..ra31 are registers, whilst addresses ra32..ra63 are peripheral addresses.
-  Registers addresses rb0..rb31 are registers, whilst addresses rb32..rb63 are peripheral addresses.
-  Similarly for wa, except addresses 32...35 write back to accumulators a0...a3
-  Similarly for wb, except addresses 32...35 write back to accumulators a0...a3
+    ra0..ra31 are registers, whilst ra32..ra63 are peripheral addresses.
+    rb0..rb31 are registers, whilst rb32..rb63 are peripheral addresses.
+    for wa, except addresses 32...35 write back to accumulators a0...a3
+    for wb, except addresses 32...35 write back to accumulators a0...a3
 </pre>
 
 #### Branches:
+<pre>
+  # Branch absolute to addr+ra, optionally save return address to wa and/or wb.
+  bra[&lt;cond&gt;] [wa|wb], addr[+ra]
+  
+  # Branch relative to pc+addr+ra, optionally save return address to wa and/or wb.
+  brr[&lt;cond&gt;] [wa|wb], addr[+ra]
+</pre>
+Encoding:
 <pre>
   addr:32, 1111 0000 cond:4 relative:1 register:1 ra:5 X:1 wa:6 wb:6
 </pre>
@@ -121,9 +153,10 @@ Where:
 
 #### Move Immediate:
 <pre>
-  movi[&lt;addcc&gt;] &lt;ra&gt;, data [setf] ; movi[&lt;mulcc&gt;] &lt;rb&gt; [setf]
-  movi[&lt;addcc&gt;] &lt;rb&gt;, data [setf] ; movi[&lt;mulcc&gt;] &lt;ra&gt; [setf]  
+  movi[&lt;addcc&gt;] wa, data [setf] ; movi[&lt;mulcc&gt;] wb, data [setf]
+  movi[&lt;addcc&gt;] wb, data [setf] ; movi[&lt;mulcc&gt;] wa, data [setf]  
 </pre>
+Encoding:
 <pre>
   data:32, 1110 unknown:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
 </pre>
