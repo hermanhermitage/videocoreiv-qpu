@@ -59,7 +59,37 @@ as stipulated in the license:
 ![3d Pipeline](https://raw.github.com/wiki/hermanhermitage/videocoreiv/images/US20110148901/FIG4.png)
 
 ### Instruction Encodings
+
+Add/Mul Operations:
 <pre>
-  mulop:3 addop:5 ra:6 rb:6 adda:3 addb:3 mula:3 mulb:3, op:4 packbits:8 addcc:3 mulcc:3 F:1 W:1 wa:6 wb:6
+  mulop:3 addop:5 ra:6 rb:6 adda:3 addb:3 mula:3 mulb:3, op:4 packbits:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
+  
+  op is the signaling or control flow operation.
+  mulop is the multiplcation ALU operation.
+  addop is the add ALU operation.
+  ra is register bank A value to read.
+  rb is register bank V value to read.
+  adda, addb encode which accumulator or ra, rb value will be supplied to the add ALU.
+  mula, mulb encode which accumulator or ra, rb value will be supplied to the multiplciation ALU.
+  packbits control the packing/unpacking operation.
+  addcc holds the cc predicate for conditional execution of the add instruction.
+  mulcc holds the cc predicate for conditional execution of the mul instruction.
+  F is set to update cc flags (there are Zero, Negative and Carry flags per unit).
+  X is set to exchange values on the writeback (ie the crossed lines in the diagram).
+  wa is destination for the add or mul result (depends on X).
+  wb is destination for the add or mul result (depends on X).
+  
+  Registers addresses ra0..ra31 are registers, whilst addresses ra32..ra63 are peripheral or math unit addresses.
+  Registers addresses rb0..rb31 are registers, whilst addresses rb32..rb63 are peripheral or math unit addresses.
+  Similarly for wa, except addresses 32...35 write back to accumulators a0...a3
+  Similarly for wb, except addresses 32...35 write back to accumulators a0...a3
+</pre>
+
+Branches:
+<pre>
+</pre>
+
+Load Immediates:
+<pre>
 </pre>
 
