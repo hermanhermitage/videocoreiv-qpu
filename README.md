@@ -58,6 +58,19 @@ as stipulated in the license:
 ### Instruction and Register Pipeline
 ![3d Pipeline](https://raw.github.com/wiki/hermanhermitage/videocoreiv/images/US20110148901/FIG4.png)
 
+- Decoupled memory access operations are: reciprocal, reciprocal square root, logarithm and exponential (US20110227920-0078).
+- Accumulators written in one cycle are available immediately in the next instruction (US20110227920-0092).
+- Accumulators are a0...a4 or r0...r5 (here) (US20110227920-0094).
+- The two register files have 32 registers each (US20110227920-0095), whilst the other 32 register addresses refer to peripheral IO.
+- The rotator allows a vector to be rotated by any one of 16 horizontal rotations (US20110227920-0096).
+- The unpackers can unpack register data, whilst the packers pack it (US20110227920-0097).
+- Support for zero-extension of 8-bit data, sign extension of 16-bit data, convert 16-bit floats to 32-bit floats. (US20110227920-0099).
+- Values written to registers (not accumulators) are not available in the next cycle (US20110227920-0103).
+- Condition field allows conditional write back of ALU results (US20110227920-0104), and updating of condition flags is optional.
+- 32-bit bit data may be written back to registers/accumulators as an alternative to ALU results (US20110227920-0105).
+- Branches have 3-delay slots (no prediction), and may be conditional based on ALU flag bits.  Branches may provide link functionality.  (US20110227920-0106).
+- Instructions may include a signalling field (US20110227920-0107) without costing an additional instruction.  Typical uses include tile buffer access, or end of program / thread switch (both with 2 delay slots).
+
 ### Instruction Encodings
 
 #### Add/Mul Operations:
