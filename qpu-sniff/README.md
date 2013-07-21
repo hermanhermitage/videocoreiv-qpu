@@ -2,7 +2,7 @@
 Walks memory looking for QPU nops or end of QPU instruction sequence markers.
 
 ## Example Use:
-
+<pre>
 $ make
 cc -std=c99    qpu-sniff.c   -o qpu-sniff
 
@@ -29,3 +29,4 @@ Scanning for QPU code fragments...
 1e9c44c0: 009e7000 300009e7 009e7000 100009e7 009e7000 100009e7 00100a00 e0020c67
 1e9c53f8: 009e7000 300009e7 009e7000 100009e7 009e7000 100009e7 15727d80 10021967
 1e9c8608: 009e7000 300009e7 009e7000 100009e7 009e7000 100009e7 00100a00 e0020c67
+</pre>
