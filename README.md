@@ -92,6 +92,7 @@ The fragments can then be saved via:
  $ sudo vcdbg save GLXX_BUFFER_T 0x1dcc79a0 640
  $ sudo vcdbg save GLXX_BUFFER_INNER_T.storage 0x1dcc7c20 96
 </pre>
+[View an analysis of some sample fragments](Traces1.md)
 
 ### QPU Instruction Set
 * Fixed length instruction word of 64 bits.
