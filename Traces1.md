@@ -2,20 +2,19 @@
 
 ## Shader Source:
 <pre>
-        const GLchar *vs_source =
-                "attribute vec4 vertex;"
-                "void main(void) {"
-                " vec4 pos = vertex;"
-                " gl_Position = vec4(pos.x*0.75, pos.y*0.75, pos.z, pos.w);"
-                "}";
+const GLchar *vs_source =
+  "attribute vec4 vertex;"
+  "void main(void) {"
+  "  vec4 pos = vertex;"
+  "  gl_Position = vec4(pos.x*0.75, pos.y*0.75, pos.z, pos.w);"
+  "}";
 </pre>
 
 <pre>
-        const GLchar *fs_source =
-                "void main(void) {"
-                "  gl_FragColor = vec4(1,1,0,0.5);"
-                "}";
-                
+const GLchar *fs_source =
+  "void main(void) {"
+  "  gl_FragColor = vec4(1,1,0,0.5);"
+  "}";        
 </pre>
 
 ## QPU Fragments:
