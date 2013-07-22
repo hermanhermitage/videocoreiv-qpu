@@ -36,7 +36,7 @@ as stipulated in the license:
 </pre>
 
 ### Key Patent Applications
-+In recommended reading order:
+In recommended reading order:
 * [US20110227920](http://www.google.com/patents/US20110227920)  Method and System for a Shader Processor With Closely Couple Peripherals
 * [US20110154307](http://www.google.com/patents/US20110154307)  Method and System for Utilizing Data Flow Graphs to Compile Shaders
 * [US20110148901](http://www.google.com/patents/US20110148901)  Method and System for Tile Mode Renderer With Coordinate Shader
@@ -45,7 +45,13 @@ as stipulated in the license:
 * [US20110242113](http://www.google.com/patents/US20110242113)  Method and System for Processing Pixels Utilizing Scoreboarding
 * [US20110261059](http://www.google.com/patents/US20110261059)  Method and System for Decomposing Complex Shapes Into Curvy RHTS For Rasterization
 * [US20080291208](http://www.google.com/patents/US20080291208)  Method and System for Processing Data Via a 3d Pipeline Coupled to a Generic Video Processing Unit 
-  
+
+### Recommended Background
+In recommended reading order:
+* [Spec: GLSL ES Shaders](http://www.khronos.org/registry/gles/specs/2.0/GLSL_ES_Specification_1.0.17.pdf)
+* [Spec: GL ES 2.0](http://www.opengl.org/documentation/specs/version2.0/glspec20.pdf)
+* [OpenGL ES 2_X](http://www.khronos.org/opengles/2_X/)
+
 ### QPU Instruction Set
 * Fixed length instruction word of 64 bits.
 * Instructions contain multiple issue slots.
