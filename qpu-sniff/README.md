@@ -1,4 +1,4 @@
-# Simple QPU Fragment Scanner.
+# Simple QPU Fragment Sniffer
 Walks memory looking for QPU nops or end of QPU instruction sequence markers.
 
 ## Example Use:
@@ -10,7 +10,7 @@ $ sudo ./qpu-sniff
 
 Scanning for QPU code fragments...
   
-$ ./hello-triangle
+$ ./hello-triangle  # or any OpenGL application
 
   # Triangle shown on screen with OpenGL ES then quits.
   
