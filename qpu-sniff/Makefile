@@ -1,2 +1,2 @@
 CFLAGS = -std=c99
-sniff: sniff.c
+qpu-sniff: qpu-sniff.c

@@ -6,7 +6,7 @@ Walks memory looking for QPU nops or end of QPU instruction sequence markers.
 $ make
 cc -std=c99    qpu-sniff.c   -o qpu-sniff
 
-$ sudo ./qpu-sniff 
+$ sudo ./qpu-sniff --qpuscan
 
 Scanning for QPU code fragments...
   
@@ -14,7 +14,7 @@ $ ./hello-triangle  # or any OpenGL application
 
   # Triangle shown on screen with OpenGL ES then quits.
   
-$ sudo ./qpu-sniff
+$ sudo ./qpu-sniff --qpuscan
 
 Scanning for QPU code fragments...
 1dcc7c78: 009e7000 300009e7 009e7000 100009e7 009e7000 500009e7 00000000 00000000
