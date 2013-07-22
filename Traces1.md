@@ -80,9 +80,9 @@ $ od -t x4 capture/shader_code_3
 ### Shader 1
 <pre>
 009e7000 100009e7 nop; nop
-009e7000 400009e7
+009e7000 400009e7 nop; signal ?
 15827d80 10020ba7 
-009e7000 300009e7
+009e7000 300009e7 nop; end thread
 009e7000 100009e7 nop; nop
-009e7000 500009e7
+009e7000 500009e7 nop; signal ?
 </pre>
