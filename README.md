@@ -52,8 +52,10 @@ In recommended reading order:
 * [Spec: GL ES 2.0](http://www.opengl.org/documentation/specs/version2.0/glspec20.pdf)
 * [OpenGL ES 2_X](http://www.khronos.org/opengles/2_X/)
 
-### Catching Traces
-Under Raspbian:
+### Catching QPU Instruction Fragments
+Under Raspbian /opt/vc/bin/ and /opt/vc/bin/vcdbg and /opt/vc/bin/vcgencmd may be used to poke about on
+the videocore side.  See https://github.com/nezticle/RaspberryPi-BuildRoot/wiki/VideoCore-Tools for more information.
+
 * Run a OpenGL ES program, and whilst it is running (or ideally paused so the shaders are static):
 <pre>
 $ sudo vcdbg reloc
