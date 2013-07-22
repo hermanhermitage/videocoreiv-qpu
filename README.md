@@ -52,6 +52,45 @@ In recommended reading order:
 * [Spec: GL ES 2.0](http://www.opengl.org/documentation/specs/version2.0/glspec20.pdf)
 * [OpenGL ES 2_X](http://www.khronos.org/opengles/2_X/)
 
+### Catching Traces
+Under Raspbian:
+* Run a OpenGL ES program, and whilst it is running (or ideally paused so the shaders are static):
+<pre>
+$ sudo vcdbg reloc
+</pre>
+This gives for example (removing the non relevant entries):
+<pre>
+[  23] 0x1c509340: used  160 (refcount 3 lock count 0, size      116, align    4, data 0x1c509360, d0rual) 'EGL_SERVER_SURFACE_T'
+[  24] 0x1c5093e0: used 7.9M (refcount 512 lock count 511, size  8294400, align 4096, data 0x1c50a000, d1Rual) 'KHRN_IMAGE_T.storage'
+[  40] 0x1ccf33e0: used 7.9M (refcount 1 lock count 0, size  8294400, align 4096, data 0x1ccf4000, d1Rual) 'KHRN_IMAGE_T.storage'
+[  39] 0x1d4dd3e0: used 7.9M (refcount 1 lock count 0, size  8294400, align 4096, data 0x1d4de000, d1Rual) 'KHRN_IMAGE_T.storage'
+[  27] 0x1dcc73e0: used  160 (refcount 1 lock count 0, size      118, align    1, data 0x1dcc7400, d0rual) 'mem_strdup'
+[  42] 0x1dcc7480: used 1.2K (refcount 2 lock count 0, size     1200, align    4, data 0x1dcc74a0, d0rual) 'GL20_PROGRAM_T'
+[  26] 0x1dcc7960: used   64 (refcount 1 lock count 0, size       24, align    4, data 0x1dcc7980, d0rual) 'GL20_PROGRAM_T.uniform_data'
+[  25] 0x1dcc79a0: used  640 (refcount 2 lock count 0, size      588, align    4, data 0x1dcc79c0, d0rual) 'GLXX_BUFFER_T'
+[  37] 0x1dcc7c20: used   96 (refcount 1 lock count 0, size       64, align    4, data 0x1dcc7c40, D1rual) 'GLXX_BUFFER_INNER_T.storage'
+[  16] 0x1dcc7c80: used   96 (refcount 1 lock count 0, size       48, align    8, data 0x1dcc7ca0, d1rual) 'shader code'
+[  33] 0x1dcc7ce0: used  256 (refcount 1 lock count 0, size      216, align    8, data 0x1dcc7d00, d1rual) 'shader code'
+[  30] 0x1dcc7de0: used  128 (refcount 1 lock count 0, size       96, align    4, data 0x1dcc7e00, d0rual) 'uniform map'
+[  15] 0x1dcc7e60: used  256 (refcount 1 lock count 0, size      208, align    8, data 0x1dcc7e80, d1rual) 'shader code'
+[  28] 0x1dd381e0: used 3.0K (refcount 1 lock count 0, size     3072, align    4, data 0x1dd38200, d0RUal) 'GLSL_COPY_CONTEXT_T.mh_blob'
+[  29] 0x1dd38e00: used  128 (refcount 1 lock count 0, size       96, align    4, data 0x1dd38e20, d0rual) 'uniform map'
+</pre>
+The fragments can then be saved via:
+<pre>
+ $ sudo vcdbg save shader_code_1 0x1dcc7c80 96
+ $ sudo vcdbg save shader_code_2 0x1dcc7ce0 256
+ $ sudo vcdbg save shader_code_3 0x1dcc7e60 256
+
+ $ sudo vcdbg save uniform_map_1 0x1dcc7de0 128
+ $ sudo vcdbg save uniform_map_2 0x1dd38e00 128
+
+ $ sudo vcdbg save GL20_PROGRAM_T 0x1dcc7480 1200
+ $ sudo vcdbg save GL20_PROGRAM_T.uniform_data 0x1dcc7960 64
+ $ sudo vcdbg save GLXX_BUFFER_T 0x1dcc79a0 640
+ $ sudo vcdbg save GLXX_BUFFER_INNER_T.storage 0x1dcc7c20 96
+</pre>
+
 ### QPU Instruction Set
 * Fixed length instruction word of 64 bits.
 * Instructions contain multiple issue slots.
