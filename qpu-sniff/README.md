@@ -30,3 +30,18 @@ Scanning for QPU code fragments...
 1e9c53f8: 009e7000 300009e7 009e7000 100009e7 009e7000 100009e7 15727d80 10021967
 1e9c8608: 009e7000 300009e7 009e7000 100009e7 009e7000 100009e7 00100a00 e0020c67
 </pre>
+
+## Sample Disassembly:
+<pre>
+$ ./qpu-sniff --qpudis capture1/shader_code_1 
+
+Disassembling capture1/shader_code_1
+Fragment capture1/shader_code_1, size 24
+00000000: 009e7000 100009e7 ra=39, rb=39, wa=39, wb=39, F=0, X=0, packbits=0x00; addop00<0> 0, 0; mulop00<0> 0, 0; op01
+00000002: 009e7000 400009e7 ra=39, rb=39, wa=39, wb=39, F=0, X=0, packbits=0x00; addop00<0> 0, 0; mulop00<0> 0, 0; op04
+00000004: 15827d80 10020ba7 ra=32, rb=39, wa=46, wb=39, F=0, X=0, packbits=0x00; addop21<1> 6, 6; mulop00<0> 0, 0; op01
+00000006: 009e7000 300009e7 ra=39, rb=39, wa=39, wb=39, F=0, X=0, packbits=0x00; addop00<0> 0, 0; mulop00<0> 0, 0; op03
+00000008: 009e7000 100009e7 ra=39, rb=39, wa=39, wb=39, F=0, X=0, packbits=0x00; addop00<0> 0, 0; mulop00<0> 0, 0; op01
+0000000a: 009e7000 500009e7 ra=39, rb=39, wa=39, wb=39, F=0, X=0, packbits=0x00; addop00<0> 0, 0; mulop00<0> 0, 0; op05
+0000000c: 00000000 00000000 ra=00, rb=00, wa=00, wb=00, F=0, X=0, packbits=0x00; addop00<0> 0, 0; mulop00<0> 0, 0; op00
+</pre>
