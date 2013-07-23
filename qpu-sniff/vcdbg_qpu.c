@@ -1,5 +1,7 @@
-#include <stdio.h>
+#define _POSIX_C_SOURCE 2
+
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 

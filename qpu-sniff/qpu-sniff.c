@@ -36,6 +36,8 @@
 #define VC_MEM_IOC_MEM_BASE         _IOR( VC_MEM_IOC_MAGIC, 2, uint32_t )
 #define VC_MEM_IOC_MEM_LOAD         _IOR( VC_MEM_IOC_MAGIC, 3, uint32_t )
 
+#include "vcdbg_qpu.h"
+
 // Space at the end of memory we assume is holding code and fixed start.elf buffers
 #define VC_MEM_IMAGE 18706228
 
@@ -66,7 +68,51 @@ int is_qpu_end(volatile uint32_t *inst) {
 // 32 Bit Immediates:
 //   data:32, 1110 unknown:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
 
+char *acc_names[8];
+char *banka_names[64]; 
+char *bankb_names[64]; 
+char *banka_w[64];
+char *bankb_w[64];
+char *ops[16];
+char *addops[32];
+char *mulops[8];
+char *cc[8];
+
+void qpu_dis_init() {
+	for (int i=0; i<64; i++) {
+		if (i<8)
+			sprintf(acc_names[i] = malloc(4), "A%d", i);
+		sprintf(banka_names[i] = malloc(5), "%s%d", i<32?"ra":"io", i);
+		sprintf(bankb_names[i] = malloc(5), "%s%d", i<32?"rb":"io", i);
+		sprintf(banka_w[i] = malloc(5), "%s%d", i<32?"ra":"io", i);
+		sprintf(bankb_w[i] = malloc(5), "%s%d", i<32?"rb":"io", i);
+		if (i<16)
+			sprintf(ops[i] = malloc(5), "op%02d", i);
+		if (i<32)
+			sprintf(addops[i] = malloc(8), "addop%02d", i);
+		if (i<8)
+			sprintf(mulops[i] = malloc(8), "mulop%02d", i);
+		if (i<8)
+			sprintf(cc[i] = malloc(6), "<cc%d>", i);
+	}
+	printf("done\n");
+}
+
+const char *qpu_r(uint32_t ra, uint32_t rb, uint32_t adda) {
+	if (adda==6) return banka_names[ra];
+	if (adda==7) return bankb_names[rb];
+	return acc_names[adda];
+}
+
+const char *qpu_w_add(uint32_t wa, uint32_t wb, uint32_t X) {
+	return X ? bankb_w[wa] : banka_w[wa];
+}
+
+const char *qpu_w_mul(uint32_t wa, uint32_t wb, uint32_t X) {
+	return X ? banka_w[wb] : bankb_w[wb];
+}
 void show_qpu_add_mul(uint32_t i0, uint32_t i1)
+
 {
 	uint32_t mulop = (i0 >> 29) & 0x7;
 	uint32_t addop = (i0 >> 24) & 0x1f;
@@ -84,11 +130,11 @@ void show_qpu_add_mul(uint32_t i0, uint32_t i1)
 	uint32_t X     = (i1 >> 12) & 0x01;
 	uint32_t wa    = (i1 >> 6) & 0x3f;
 	uint32_t wb    = (i1 >> 0) & 0x3f;
-	printf("ra=%02d, rb=%02d, wa=%02d, wb=%02d, F=%x, X=%x, packbits=0x%02x; addop%02d<%x> %x, %x; mulop%02d<%x> %x, %x; op%02d\n",
-			ra, rb, wa, wb, F, X, packbits,
-			addop, addcc, adda, addb,
-			mulop, mulcc, mula, mulb,
-			op);
+	printf("ra=%02d, rb=%02d, adda=%x, addb=%x, mula=%x, mulb=%x, wa=%02d, wb=%02d, F=%x, X=%x, packbits=0x%02x; %s%s %s, %s, %s; %s%s %s, %s, %s; %s\n",
+			ra, rb, adda, addb, mula, mulb, wa, wb, F, X, packbits,
+			addops[addop], cc[addcc], qpu_w_add(wa, wb, X), qpu_r(ra, rb, adda), qpu_r(ra, rb, addb),
+			mulops[mulop], cc[mulcc], qpu_w_mul(wa, wb, X), qpu_r(ra, rb, mula), qpu_r(ra, rb, mulb),
+			ops[op]);
 }
 
 void show_qpu_branch(uint32_t i0, uint32_t i1)
@@ -161,6 +207,7 @@ void file_unload(uint32_t *data) {
 }
 
 void qpu_dis_file(const char *filename) {
+	qpu_dis_init();
 	printf("Disassembling %s\n", filename);
 	uint32_t size;
 	uint32_t *fragment = file_load(filename, &size);
@@ -221,6 +268,39 @@ void qpuscan(char *argv[]) {
 	close(fd);
 }
 
+char printable(char c) {
+	return ((c>=32) && (c<127)) ? c : '.';
+}
+void show_raw_fragment(char *type, unsigned int *data, int size) {
+	int i = 0;
+	printf("type = %s\n", type);
+	printf("size = %d\n", size);
+	for (; i<size/4; i+=2) {
+		unsigned char *u8 = (unsigned char *)&data[i];
+		int j = 0;
+		for (;j<8;j++) printf("%c", printable(u8[j]));
+		printf(" %08x %08x", data[i+0], data[i+1]);
+		float *f = (float *)&data[i];
+		printf(" %10.4g %10.4g\n", f[0], f[1]);
+	}
+	printf("\n");
+}
+
+void show_fragment(char *type, unsigned int *data, int size) {
+	if (strcmp("'shader code'", type)==0) {
+		printf("%s:\n", type);
+		show_qpu_fragment(data, size/4);
+	} 
+	else {
+		show_raw_fragment(type, data, size);
+	}	
+}
+
+void vcdbgqpuscan(char *argv[]) {
+	qpu_dis_init();
+	vcdbg_scan_relocs(0, show_fragment);
+}
+
 int main(int argc, char * argv[])
 {
 	if (argc==1)
@@ -228,8 +308,11 @@ int main(int argc, char * argv[])
 
 	for (int i=1; i<argc; i++)
 	{
-		if (strcmp(argv[i], "--qpuscan")==0) {
+		if (strcmp(argv[i], "--qpuscan-old")==0) {
 			qpuscan(argv);
+		}
+		if (strcmp(argv[i], "--qpuscan")==0) {
+			vcdbgqpuscan(argv);
 		}
 		else if (strcmp(argv[i], "--qpudis")==0) {
 			qpu_dis_file(argv[++i]);
