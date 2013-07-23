@@ -19,6 +19,8 @@ const GLchar *fs_source =
 
 ## QPU Fragments:
 
+### Fragment Shader
+
 $ od -t x4 capture/shader_code_1
 <pre>
 0000000 00000061 00000043 00000030 1ecf546c
@@ -32,6 +34,8 @@ $ od -t x4 capture/shader_code_1
 <pre>
 0000120 00000000 00000000 00000000 ffffffff
 </pre>
+
+### Vertex Shaders
 
 $ od -t x4 capture/shader_code_2
 <pre>
