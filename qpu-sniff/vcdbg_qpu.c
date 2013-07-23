@@ -149,12 +149,12 @@ void show(char *type, unsigned int *data, int size) {
 	printf("type = %s\n", type);
 	printf("size = %d\n", size);
 	for (; i<size/4; i+=2) {
-		printf("%08x %08x ", data[i+0], data[i+1]);
 		unsigned char *u8 = (unsigned char *)&data[i];
 		int j = 0;
 		for (;j<8;j++) printf("%c", printable(u8[j]));
+		printf(" %08x %08x", data[i+0], data[i+1]);
 		float *f = (float *)&data[i];
-		printf(" %+8f %+8f\n", f[i+0], f[i+1]);
+		printf(" %10.4g %10.4g\n", f[0], f[1]);
 	}
 	printf("\n");
 }
