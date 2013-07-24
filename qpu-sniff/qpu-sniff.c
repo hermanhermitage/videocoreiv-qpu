@@ -95,7 +95,6 @@ void qpu_dis_init() {
 		if (i<8)
 			sprintf(cc[i] = malloc(6), "<cc%d>", i);
 	}
-	printf("done\n");
 }
 
 const char *qpu_r(uint32_t ra, uint32_t rb, uint32_t adda) {
@@ -277,8 +276,7 @@ void show_raw_fragment(char *type, unsigned int *data, int size) {
 	printf("size = %d\n", size);
 	for (; i<size/4; i+=2) {
 		unsigned char *u8 = (unsigned char *)&data[i];
-		int j = 0;
-		for (;j<8;j++) printf("%c", printable(u8[j]));
+		for (int j=0;j<8;j++) printf("%c", printable(u8[j]));
 		printf(" %08x %08x", data[i+0], data[i+1]);
 		float *f = (float *)&data[i];
 		printf(" %10.4g %10.4g\n", f[0], f[1]);
@@ -311,7 +309,7 @@ int main(int argc, char * argv[])
 		if (strcmp(argv[i], "--qpuscan-old")==0) {
 			qpuscan(argv);
 		}
-		if (strcmp(argv[i], "--qpuscan")==0) {
+		else if (strcmp(argv[i], "--qpuscan")==0) {
 			vcdbgqpuscan(argv);
 		}
 		else if (strcmp(argv[i], "--qpudis")==0) {
@@ -319,7 +317,7 @@ int main(int argc, char * argv[])
 		}
 		else {
 usage:
-			printf("Usage:\n  %s [--qpuscan] [--qpudis <filename>]\n", argv[0]);
+			printf("Usage:\n  %s [--qpuscan] [--qpuscan-old] [--qpudis <filename>]\n", argv[0]);
 			exit(-1);
 		}
 	}
