@@ -1,20 +1,45 @@
 # Simple QPU Fragment Sniffer
-Walks memory looking for QPU nops or end of QPU instruction sequence markers.
+Walks vcdbg relocs looking for OpenGL ES data, including QPU shader fragments.
 
 ## Example Use:
 <pre>
 $ make
-cc -std=c99    qpu-sniff.c   -o qpu-sniff
+cc -std=c99    qpu-sniff.c vcdbg_qpu.c   -o qpu-sniff
+</pre>
 
-$ sudo ./qpu-sniff --qpuscan
-
-Scanning for QPU code fragments...
-  
+In one terminal session:
+<pre>
 $ ./hello-triangle  # or any OpenGL application
+# Leave OpenGL program active so programs, shaders, uniforms are static in memory.
+</pre>
+And then in another terminal session:
+<pre>
+$ ./qpu-scan --qpuscan
 
-  # Triangle shown on screen with OpenGL ES then quits.
-  
-$ sudo ./qpu-sniff --qpuscan
+...
+type = 'GL20_PROGRAM_T.uniform_data'                                                                                                     
+size = 20
+.......? 00000000 3f800000          0          1                                                                                        
+.......@ bf800000 40000000         -1          2                                         
+...?.... 3f000000 8000000b        0.5 -1.541e-44     
+
+...
+'shader code':
+00000000: 009e7000 100009e7 ra=39, rb=39, adda=0, addb=0, mula=0, mulb=0, wa=39, wb=39, F=0, X=0, packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op01
+00000002: 009e7000 400009e7 ra=39, rb=39, adda=0, addb=0, mula=0, mulb=0, wa=39, wb=39, F=0, X=0, packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op04
+00000004: 15827d80 10020ba7 ra=32, rb=39, adda=6, addb=6, mula=0, mulb=0, wa=46, wb=39, F=0, X=0, packbits=0x00; addop21<cc1> io46, io32, io32; mulop00<cc0> io39, A0, A0; op01
+00000006: 009e7000 300009e7 ra=39, rb=39, adda=0, addb=0, mula=0, mulb=0, wa=39, wb=39, F=0, X=0, packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op03
+00000008: 009e7000 100009e7 ra=39, rb=39, adda=0, addb=0, mula=0, mulb=0, wa=39, wb=39, F=0, X=0, packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op01
+0000000a: 009e7000 500009e7 ra=39, rb=39, adda=0, addb=0, mula=0, mulb=0, wa=39, wb=39, F=0, X=0, packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op05
+
+...
+
+</pre>
+
+
+Or using the older raw memory scanner:
+<pre>
+$ sudo ./qpu-sniff --qpuscan-old
 
 Scanning for QPU code fragments...
 1dcc7c78: 009e7000 300009e7 009e7000 100009e7 009e7000 500009e7 00000000 00000000
