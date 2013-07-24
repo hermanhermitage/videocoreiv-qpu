@@ -1,4 +1,3 @@
-"precision lowp float;"
 "uniform vec4 c1;"
 "uniform vec4 c2;"
 "uniform vec4 c3;"
