@@ -70,7 +70,7 @@ $ ./hello-triangle  # or any OpenGL application
 </pre>
 And then in another terminal session:
 <pre>
-$ ./qpu-scan --qpuscan
+$ ./qpu-sniff --qpuscan
 
 ...
 type = 'GL20_PROGRAM_T.uniform_data'                                                                                                     
