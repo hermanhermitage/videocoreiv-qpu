@@ -21,7 +21,8 @@ char *default_filters[] = {
 	"'GLXX_FRAMEBUFFER_T'",
 	"'GLXX_BUFFER_T'",
 	"'GLXX_BUFFER_INNER_T.storage'",
-	"'VG_PAINT_T'"
+	"'VG_PAINT_T'",
+	0
 };
 
 struct processor_t;
@@ -68,7 +69,8 @@ struct processor_data_t {
 	struct processor_fn_t *fn;
 	unsigned int size;
 	char *type;
-	void (*on_reloc)(char *type, unsigned int *data, int size);
+	unsigned int original_address;
+	void (*on_reloc)(char *type, unsigned int original_address, unsigned int *data, int size);
 	unsigned int *data;
 	unsigned char *ptr;
 };
@@ -92,19 +94,19 @@ void processor_data_next(struct processor_t *bo, char *data) {
 
 void processor_data_end(struct processor_t *bo, int err) {
 	struct processor_data_t *o = (struct processor_data_t *)bo;
-	o->on_reloc(o->type, o->data, o->size);
+	o->on_reloc(o->type, o->original_address, o->data, o->size);
 	free(o->data);
 }
 
 struct processor_fn_t processor_fn_data = {
 	processor_data_begin, processor_data_next, processor_data_end, processor_base_error
 };
-#define new_processor_data(size, type, on_reloc) *(struct processor_t *)&(struct processor_data_t){&processor_fn_data, size, type, on_reloc}
+#define new_processor_data(size, type, original_address, on_reloc) *(struct processor_t *)&(struct processor_data_t){&processor_fn_data, size, type, original_address, on_reloc}
 
 struct processor_reloc_t {
 	struct processor_fn_t *fn;
 	char **filters;
-	void (*on_reloc)(char *type, unsigned int *data, int size);
+	void (*on_reloc)(char *type, unsigned int original_address, unsigned int *data, int size);
 } ;
 void scan_reloc(struct processor_t *bo, char *s) {
 	struct processor_reloc_t *o = (struct processor_reloc_t *)bo;
@@ -121,7 +123,7 @@ void scan_reloc(struct processor_t *bo, char *s) {
 				if (strcmp(type, o->filters[i])==0) {
 					char dump[256];
 					sprintf(dump, "sudo vcdbg dump 0x%08x %d", data, size);
-					process(&new_processor_data(size, type, o->on_reloc), dump);
+					process(&new_processor_data(size, type, data, o->on_reloc), dump);
 					continue;
 				}
 			}
@@ -136,7 +138,7 @@ struct processor_fn_t processor_fn_reloc = {
 };
 #define new_processor_reloc(filters, on_reloc) *(struct processor_t *)&(struct processor_reloc_t){&processor_fn_reloc, filters, on_reloc}
 
-void vcdbg_scan_relocs(char *filters[], void on_reloc(char *type, unsigned int *data, int size)) {
+void vcdbg_scan_relocs(char *filters[], void on_reloc(char *type, unsigned int original_addr, unsigned int *data, int size)) {
 	process(&new_processor_reloc(filters ? filters : default_filters, on_reloc), "sudo vcdbg reloc small");
 }
 
@@ -148,8 +150,7 @@ char printable(char c) {
 
 void show(char *type, unsigned int *data, int size) {
 	int i = 0;
-	printf("type = %s\n", type);
-	printf("size = %d\n", size);
+	printf("(%s %08x %d)\n", type, data, size);
 	for (; i<size/4; i+=2) {
 		unsigned char *u8 = (unsigned char *)&data[i];
 		int j = 0;

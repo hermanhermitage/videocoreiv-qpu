@@ -37,6 +37,7 @@
 #define VC_MEM_IOC_MEM_LOAD         _IOR( VC_MEM_IOC_MAGIC, 3, uint32_t )
 
 #include "vcdbg_qpu.h"
+#include "testgl.h"
 
 // Space at the end of memory we assume is holding code and fixed start.elf buffers
 #define VC_MEM_IMAGE 18706228
@@ -68,6 +69,11 @@ int is_qpu_end(volatile uint32_t *inst) {
 // 32 Bit Immediates:
 //   data:32, 1110 unknown:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
 
+//#define TEST
+#ifdef TEST
+#include "test.c"
+int qpu_dis_init() {}
+#else
 char *acc_names[8];
 char *banka_names[64]; 
 char *bankb_names[64]; 
@@ -96,6 +102,7 @@ void qpu_dis_init() {
 			sprintf(cc[i] = malloc(6), "<cc%d>", i);
 	}
 }
+#endif
 
 const char *qpu_r(uint32_t ra, uint32_t rb, uint32_t adda) {
 	if (adda==6) return banka_names[ra];
@@ -129,8 +136,15 @@ void show_qpu_add_mul(uint32_t i0, uint32_t i1)
 	uint32_t X     = (i1 >> 12) & 0x01;
 	uint32_t wa    = (i1 >> 6) & 0x3f;
 	uint32_t wb    = (i1 >> 0) & 0x3f;
-	printf("ra=%02d, rb=%02d, adda=%x, addb=%x, mula=%x, mulb=%x, wa=%02d, wb=%02d, F=%x, X=%x, packbits=0x%02x; %s%s %s, %s, %s; %s%s %s, %s, %s; %s\n",
+	/*
+	 * printf("ra=%02d, rb=%02d, adda=%x, addb=%x, mula=%x, mulb=%x, wa=%02d, wb=%02d, F=%x, X=%x, packbits=0x%02x; %s%s %s, %s, %s; %s%s %s, %s, %s; %s\n",
 			ra, rb, adda, addb, mula, mulb, wa, wb, F, X, packbits,
+			addops[addop], cc[addcc], qpu_w_add(wa, wb, X), qpu_r(ra, rb, adda), qpu_r(ra, rb, addb),
+			mulops[mulop], cc[mulcc], qpu_w_mul(wa, wb, X), qpu_r(ra, rb, mula), qpu_r(ra, rb, mulb),
+			ops[op]);
+			*/
+	printf("packbits=0x%02x; %s%s %s, %s, %s; %s%s %s, %s, %s; %s\n",
+			packbits,
 			addops[addop], cc[addcc], qpu_w_add(wa, wb, X), qpu_r(ra, rb, adda), qpu_r(ra, rb, addb),
 			mulops[mulop], cc[mulcc], qpu_w_mul(wa, wb, X), qpu_r(ra, rb, mula), qpu_r(ra, rb, mulb),
 			ops[op]);
@@ -180,6 +194,7 @@ void show_qpu_fragment(uint32_t *inst, int length) {
 	for(;i<length; i+=2) {
 		printf("%08x: %08x %08x ", i, inst[i], inst[i+1]); show_qpu_inst(&inst[i]);
 	}
+	printf("\n");
 }
 
 uint32_t *file_load(const char *filename, uint32_t *filesize) {
@@ -189,7 +204,8 @@ uint32_t *file_load(const char *filename, uint32_t *filesize) {
 		fseek(f, 0, SEEK_END);
 		long size = ftell(f);
 		fseek(f, 0, SEEK_SET);
-		memory = malloc(size);
+		memory = malloc(size+1);
+		memory[size] = 0;
 		if ((memory==0) || (fread(memory, size, 1, f)==0)) {
 			free(memory);
 			memory = 0;
@@ -272,8 +288,7 @@ char printable(char c) {
 }
 void show_raw_fragment(char *type, unsigned int *data, int size) {
 	int i = 0;
-	printf("type = %s\n", type);
-	printf("size = %d\n", size);
+	printf("(%s %08x %d)\n", type, data, size);
 	for (; i<size/4; i+=2) {
 		unsigned char *u8 = (unsigned char *)&data[i];
 		for (int j=0;j<8;j++) printf("%c", printable(u8[j]));
@@ -284,9 +299,9 @@ void show_raw_fragment(char *type, unsigned int *data, int size) {
 	printf("\n");
 }
 
-void show_fragment(char *type, unsigned int *data, int size) {
+void show_fragment(char *type, unsigned int original_address, unsigned int *data, int size) {
 	if (strcmp("'shader code'", type)==0) {
-		printf("%s:\n", type);
+		printf("(%s %08x %d)\n", type, original_address, size);
 		show_qpu_fragment(data, size/4);
 	} 
 	else {
@@ -297,6 +312,32 @@ void show_fragment(char *type, unsigned int *data, int size) {
 void vcdbgqpuscan(char *argv[]) {
 	qpu_dis_init();
 	vcdbg_scan_relocs(0, show_fragment);
+}
+
+
+void testgl(char *vs_filename, char *fs_filename) {
+	char *vs = (char *)file_load(vs_filename, 0);
+	char *fs = (char *)file_load(fs_filename, 0);
+	if (vs && fs) {
+		printf("\n%s:\n%s", vs_filename, vs);
+		printf("\n%s:\n%s", fs_filename, fs);
+		begin_gl_test(1);
+		char *vs_log=0, *fs_log=0, *program_log=0;
+		if (run_gl_test(vs, fs, &vs_log, &fs_log, &program_log)) {
+			printf("Failed to run shaders.\n");
+			if (vs_log) printf("VS:\n%s\n", vs_log);
+			if (fs_log) printf("FS:\n%s\n", fs_log);
+			if (program_log) printf("Program:\n%s\n", program_log);
+		}
+		else {
+			qpu_dis_init();
+			char *relocs[] = {"'shader code'", 0};
+			vcdbg_scan_relocs(relocs, show_fragment);
+		}
+		end_gl_test();
+	}
+	file_unload((void *)vs);
+	file_unload((void *)fs);
 }
 
 int main(int argc, char * argv[])
@@ -315,9 +356,12 @@ int main(int argc, char * argv[])
 		else if (strcmp(argv[i], "--qpudis")==0) {
 			qpu_dis_file(argv[++i]);
 		}
+		else if (strcmp(argv[i], "--testgl")==0) {
+			testgl(argv[++i], argv[++i]);
+		}
 		else {
 usage:
-			printf("Usage:\n  %s [--qpuscan] [--qpuscan-old] [--qpudis <filename>]\n", argv[0]);
+			printf("Usage:\n  %s [--qpuscan] [--qpuscan-old] [--qpudis <filename>] [[--testgl <shader.vs> <shader.fs>]\n", argv[0]);
 			exit(-1);
 		}
 	}

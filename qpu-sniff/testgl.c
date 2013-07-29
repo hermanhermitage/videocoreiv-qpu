@@ -35,6 +35,8 @@ struct gl_t *createGl(int eglVersion, int width, int height, int offscreen) {
 		EGL_GREEN_SIZE, 8,
 		EGL_BLUE_SIZE, 8,
 		EGL_ALPHA_SIZE, 8,
+		EGL_DEPTH_SIZE, 24,//added
+		EGL_STENCIL_SIZE, 8, // added
 		EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
 		EGL_NONE
 	};
@@ -155,11 +157,13 @@ static char *getProgramInfoLog(GLint program)
 int compile_shaders(const char *vs_source, const char *fs_source, char **vs_log, char **fs_log, char **program_log) {
 
 	int errors = 0;
+	GLint status;
 
         vshader = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vshader, 1, &vs_source, 0);
         glCompileShader(vshader);
-	if (glGetError())
+	glGetShaderiv(vshader, GL_COMPILE_STATUS, &status);
+	if (glGetError() || !status)
 		errors++;
 	if (vs_log)
 		*vs_log = getShaderInfoLog(vshader);
@@ -167,7 +171,8 @@ int compile_shaders(const char *vs_source, const char *fs_source, char **vs_log,
         fshader = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fshader, 1, &fs_source, 0);
         glCompileShader(fshader);
-	if (glGetError())
+	glGetShaderiv(vshader, GL_COMPILE_STATUS, &status);
+	if (glGetError() || !status)
 		errors++;
 	if (fs_log)
 		*fs_log = getShaderInfoLog(fshader);
@@ -176,7 +181,8 @@ int compile_shaders(const char *vs_source, const char *fs_source, char **vs_log,
         glAttachShader(program, vshader);
         glAttachShader(program, fshader);
         glLinkProgram(program);
-	if (glGetError())
+	glGetProgramiv(program, GL_LINK_STATUS, &status);
+	if (glGetError() || !status)
 		errors++;
 	if (program_log)
 		*program_log = getProgramInfoLog(program);
@@ -187,14 +193,44 @@ int compile_shaders(const char *vs_source, const char *fs_source, char **vs_log,
 void run_shaders() {
 	// Wire up vertex buffer to shader
         attr_vertex = glGetAttribLocation(program, "vertex");
-        glVertexAttribPointer(attr_vertex, 4, GL_FLOAT, 0, 16, 0);
-        glEnableVertexAttribArray(attr_vertex);
-        checkGl();
+	if (attr_vertex != -1) {
+		glVertexAttribPointer(attr_vertex, 4, GL_FLOAT, 0, 16, 0);
+		glEnableVertexAttribArray(attr_vertex);
+		checkGl();
+	}
 
 	// Set Uniforms
         unif_color  = glGetUniformLocation(program, "color");
-	glUniform4f(unif_color, 0.5, 0.5, 0.8, 1.0);
-        checkGl();
+	if (unif_color != -1) {
+		glUniform4f(unif_color, 0.5, 0.5, 0.8, 1.0);
+        	checkGl();
+	}
+
+	if (0) {
+		glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_ONE);
+		glBlendEquation(GL_FUNC_ADD);
+		glBlendColor(0.5, 0.5, 0.5, 1.0);
+		glEnable(GL_BLEND);
+	}
+
+	if (0) {
+		glColorMask(1.0, 0.0, 0.0, 1.0);
+	}
+
+	if (0) {
+		//  glLogicOp(GL_AND); // not in es2	
+	}
+
+	if (0) {
+		glDepthFunc(GL_EQUAL);
+		glEnable(GL_DEPTH_TEST);
+	}
+
+	if (0) {
+		glStencilFunc(GL_LESS, 10, 0xffffffff);
+		glStencilOp(GL_INCR, GL_DECR, GL_ZERO);
+		glEnable(GL_STENCIL_TEST);
+	}
 
 	// Draw triangles
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
