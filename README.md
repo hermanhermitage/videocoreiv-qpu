@@ -52,111 +52,6 @@ In recommended reading order:
 * [Spec: GL ES 2.0](http://www.opengl.org/documentation/specs/version2.0/glspec20.pdf)
 * [OpenGL ES 2_X](http://www.khronos.org/opengles/2_X/)
 
-### Catching QPU Instruction Fragments
-
-#### Automatically
-Use qpu-sniff from the qpu-sniff directory.
-Example:
-- First fragment is the fragment shader.
-- Second fragment is the full vertex shader.
-- Third fragment is the coordinate shader (vertex shader only concerned with Vertex positions - used for tiling).
-
-<pre>
-vs/null.vs:
-void main(void) {
-}
-
-
-fs/add.fs:
-uniform vec4 c1;
-uniform vec4 c2;
-void main(void) {
-  gl_FragColor = c1+c2;
-}
-
-('shader code' 1c50acc0 88)
-00000000: 15827d80 10020827 packbits=0x00; addop21<cc1> io32, io32, io32; mulop00<cc0> io39, A0, A0; op01
-00000002: 01827c00 40020867 packbits=0x00; addop01<cc1> io33, io32, A0; mulop00<cc0> io39, A0, A0; op04
-00000004: 15827d80 10020827 packbits=0x00; addop21<cc1> io32, io32, io32; mulop00<cc0> io39, A0, A0; op01
-00000006: 01827c00 10020827 packbits=0x00; addop01<cc1> io32, io32, A0; mulop00<cc0> io39, A0, A0; op01
-00000008: 95827d80 114258a0 packbits=0x14; addop21<cc1> io34, io32, io32; mulop04<cc1> io32, A0, A0; op01
-0000000a: 81827c89 11525860 packbits=0x15; addop01<cc1> io33, io32, A2; mulop04<cc1> io32, A1, A1; op01
-0000000c: 95827d89 11625860 packbits=0x16; addop21<cc1> io33, io32, io32; mulop04<cc1> io32, A1, A1; op01
-0000000e: 01827c40 10020867 packbits=0x00; addop01<cc1> io33, io32, A1; mulop00<cc0> io39, A0, A0; op01
-00000010: 809e7009 317059e0 packbits=0x17; addop00<cc0> io39, A0, A0; mulop04<cc1> io32, A1, A1; op03
-00000012: 159e7000 10020ba7 packbits=0x00; addop21<cc1> io46, A0, A0; mulop00<cc0> io39, A0, A0; op01
-00000014: 009e7000 500009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op05
-
-('shader code' 1c50ad40 104)
-00000000: 15827d80 10120027 packbits=0x01; addop21<cc1> ra0, io32, io32; mulop00<cc0> io39, A0, A0; op01
-00000002: 15827d80 10220027 packbits=0x02; addop21<cc1> ra0, io32, io32; mulop00<cc0> io39, A0, A0; op01
-00000004: 15827d80 10021c67 packbits=0x00; addop21<cc1> io49, io32, io32; mulop00<cc0> io39, A0, A0; op01
-00000006: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
-00000008: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
-0000000a: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
-0000000c: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
-0000000e: 95020dbf 10024c20 packbits=0x00; addop21<cc1> io48, ra0, ra0; mulop04<cc1> io32, io32, io32; op01
-00000010: 01827c00 10020c27 packbits=0x00; addop01<cc1> io48, io32, A0; mulop00<cc0> io39, A0, A0; op01
-00000012: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
-00000014: 009e7000 300009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op03
-00000016: 009e7000 100009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op01
-00000018: 009e7000 100009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op01
-
-('shader code' 1c50ae60 72)
-00000000: 15827d80 10120027 packbits=0x01; addop21<cc1> ra0, io32, io32; mulop00<cc0> io39, A0, A0; op01
-00000002: 15827d80 10220027 packbits=0x02; addop21<cc1> ra0, io32, io32; mulop00<cc0> io39, A0, A0; op01
-00000004: 15827d80 10021c67 packbits=0x00; addop21<cc1> io49, io32, io32; mulop00<cc0> io39, A0, A0; op01
-00000006: 95020dbf 10024c20 packbits=0x00; addop21<cc1> io48, ra0, ra0; mulop04<cc1> io32, io32, io32; op01
-00000008: 01827c00 10020c27 packbits=0x00; addop01<cc1> io48, io32, A0; mulop00<cc0> io39, A0, A0; op01
-0000000a: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
-0000000c: 009e7000 300009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op03
-0000000e: 009e7000 100009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op01
-00000010: 009e7000 100009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op01
-</pre>
-
-#### Manually
-
-Under Raspbian /opt/vc/bin/ and /opt/vc/bin/vcdbg and /opt/vc/bin/vcgencmd may be used to poke about on
-the videocore side.  See https://github.com/nezticle/RaspberryPi-BuildRoot/wiki/VideoCore-Tools for more information.
-
-* Run a OpenGL ES program, and whilst it is running (or ideally paused so the shaders are static):
-<pre>
-$ sudo vcdbg reloc
-</pre>
-This gives for example (removing the non relevant entries):
-<pre>
-[  23] 0x1c509340: used  160 (refcount 3 lock count 0, size      116, align    4, data 0x1c509360, d0rual) 'EGL_SERVER_SURFACE_T'
-[  24] 0x1c5093e0: used 7.9M (refcount 512 lock count 511, size  8294400, align 4096, data 0x1c50a000, d1Rual) 'KHRN_IMAGE_T.storage'
-[  40] 0x1ccf33e0: used 7.9M (refcount 1 lock count 0, size  8294400, align 4096, data 0x1ccf4000, d1Rual) 'KHRN_IMAGE_T.storage'
-[  39] 0x1d4dd3e0: used 7.9M (refcount 1 lock count 0, size  8294400, align 4096, data 0x1d4de000, d1Rual) 'KHRN_IMAGE_T.storage'
-[  27] 0x1dcc73e0: used  160 (refcount 1 lock count 0, size      118, align    1, data 0x1dcc7400, d0rual) 'mem_strdup'
-[  42] 0x1dcc7480: used 1.2K (refcount 2 lock count 0, size     1200, align    4, data 0x1dcc74a0, d0rual) 'GL20_PROGRAM_T'
-[  26] 0x1dcc7960: used   64 (refcount 1 lock count 0, size       24, align    4, data 0x1dcc7980, d0rual) 'GL20_PROGRAM_T.uniform_data'
-[  25] 0x1dcc79a0: used  640 (refcount 2 lock count 0, size      588, align    4, data 0x1dcc79c0, d0rual) 'GLXX_BUFFER_T'
-[  37] 0x1dcc7c20: used   96 (refcount 1 lock count 0, size       64, align    4, data 0x1dcc7c40, D1rual) 'GLXX_BUFFER_INNER_T.storage'
-[  16] 0x1dcc7c80: used   96 (refcount 1 lock count 0, size       48, align    8, data 0x1dcc7ca0, d1rual) 'shader code'
-[  33] 0x1dcc7ce0: used  256 (refcount 1 lock count 0, size      216, align    8, data 0x1dcc7d00, d1rual) 'shader code'
-[  30] 0x1dcc7de0: used  128 (refcount 1 lock count 0, size       96, align    4, data 0x1dcc7e00, d0rual) 'uniform map'
-[  15] 0x1dcc7e60: used  256 (refcount 1 lock count 0, size      208, align    8, data 0x1dcc7e80, d1rual) 'shader code'
-[  28] 0x1dd381e0: used 3.0K (refcount 1 lock count 0, size     3072, align    4, data 0x1dd38200, d0RUal) 'GLSL_COPY_CONTEXT_T.mh_blob'
-[  29] 0x1dd38e00: used  128 (refcount 1 lock count 0, size       96, align    4, data 0x1dd38e20, d0rual) 'uniform map'
-</pre>
-The fragments can then be saved via:
-<pre>
- $ sudo vcdbg save shader_code_1 0x1dcc7c80 96
- $ sudo vcdbg save shader_code_2 0x1dcc7ce0 256
- $ sudo vcdbg save shader_code_3 0x1dcc7e60 256
-
- $ sudo vcdbg save uniform_map_1 0x1dcc7de0 128
- $ sudo vcdbg save uniform_map_2 0x1dd38e00 128
-
- $ sudo vcdbg save GL20_PROGRAM_T 0x1dcc7480 1200
- $ sudo vcdbg save GL20_PROGRAM_T.uniform_data 0x1dcc7960 64
- $ sudo vcdbg save GLXX_BUFFER_T 0x1dcc79a0 640
- $ sudo vcdbg save GLXX_BUFFER_INNER_T.storage 0x1dcc7c20 96
-</pre>
-[View an analysis of some sample fragments](Traces1.md)
-
 ### QPU Instruction Set
 * Fixed length instruction word of 64 bits.
 * Instructions contain multiple issue slots.
@@ -289,3 +184,109 @@ Where:
   data is constant to be loaded.
   addcc, mulcc, F, X, wa and wb as above.
 </pre>
+
+### Catching QPU Instruction Fragments
+
+#### Automatically
+Use qpu-sniff from the qpu-sniff directory.
+Example:
+- First fragment is the fragment shader.
+- Second fragment is the full vertex shader.
+- Third fragment is the coordinate shader (vertex shader only concerned with Vertex positions - used for tiling).
+
+<pre>
+vs/null.vs:
+void main(void) {
+}
+
+
+fs/add.fs:
+uniform vec4 c1;
+uniform vec4 c2;
+void main(void) {
+  gl_FragColor = c1+c2;
+}
+
+('shader code' 1c50acc0 88)
+00000000: 15827d80 10020827 packbits=0x00; addop21<cc1> io32, io32, io32; mulop00<cc0> io39, A0, A0; op01
+00000002: 01827c00 40020867 packbits=0x00; addop01<cc1> io33, io32, A0; mulop00<cc0> io39, A0, A0; op04
+00000004: 15827d80 10020827 packbits=0x00; addop21<cc1> io32, io32, io32; mulop00<cc0> io39, A0, A0; op01
+00000006: 01827c00 10020827 packbits=0x00; addop01<cc1> io32, io32, A0; mulop00<cc0> io39, A0, A0; op01
+00000008: 95827d80 114258a0 packbits=0x14; addop21<cc1> io34, io32, io32; mulop04<cc1> io32, A0, A0; op01
+0000000a: 81827c89 11525860 packbits=0x15; addop01<cc1> io33, io32, A2; mulop04<cc1> io32, A1, A1; op01
+0000000c: 95827d89 11625860 packbits=0x16; addop21<cc1> io33, io32, io32; mulop04<cc1> io32, A1, A1; op01
+0000000e: 01827c40 10020867 packbits=0x00; addop01<cc1> io33, io32, A1; mulop00<cc0> io39, A0, A0; op01
+00000010: 809e7009 317059e0 packbits=0x17; addop00<cc0> io39, A0, A0; mulop04<cc1> io32, A1, A1; op03
+00000012: 159e7000 10020ba7 packbits=0x00; addop21<cc1> io46, A0, A0; mulop00<cc0> io39, A0, A0; op01
+00000014: 009e7000 500009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op05
+
+('shader code' 1c50ad40 104)
+00000000: 15827d80 10120027 packbits=0x01; addop21<cc1> ra0, io32, io32; mulop00<cc0> io39, A0, A0; op01
+00000002: 15827d80 10220027 packbits=0x02; addop21<cc1> ra0, io32, io32; mulop00<cc0> io39, A0, A0; op01
+00000004: 15827d80 10021c67 packbits=0x00; addop21<cc1> io49, io32, io32; mulop00<cc0> io39, A0, A0; op01
+00000006: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
+00000008: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
+0000000a: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
+0000000c: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
+0000000e: 95020dbf 10024c20 packbits=0x00; addop21<cc1> io48, ra0, ra0; mulop04<cc1> io32, io32, io32; op01
+00000010: 01827c00 10020c27 packbits=0x00; addop01<cc1> io48, io32, A0; mulop00<cc0> io39, A0, A0; op01
+00000012: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
+00000014: 009e7000 300009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op03
+00000016: 009e7000 100009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op01
+00000018: 009e7000 100009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op01
+
+('shader code' 1c50ae60 72)
+00000000: 15827d80 10120027 packbits=0x01; addop21<cc1> ra0, io32, io32; mulop00<cc0> io39, A0, A0; op01
+00000002: 15827d80 10220027 packbits=0x02; addop21<cc1> ra0, io32, io32; mulop00<cc0> io39, A0, A0; op01
+00000004: 15827d80 10021c67 packbits=0x00; addop21<cc1> io49, io32, io32; mulop00<cc0> io39, A0, A0; op01
+00000006: 95020dbf 10024c20 packbits=0x00; addop21<cc1> io48, ra0, ra0; mulop04<cc1> io32, io32, io32; op01
+00000008: 01827c00 10020c27 packbits=0x00; addop01<cc1> io48, io32, A0; mulop00<cc0> io39, A0, A0; op01
+0000000a: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
+0000000c: 009e7000 300009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op03
+0000000e: 009e7000 100009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op01
+00000010: 009e7000 100009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op01
+</pre>
+
+#### Manually
+
+Under Raspbian /opt/vc/bin/ and /opt/vc/bin/vcdbg and /opt/vc/bin/vcgencmd may be used to poke about on
+the videocore side.  See https://github.com/nezticle/RaspberryPi-BuildRoot/wiki/VideoCore-Tools for more information.
+
+* Run a OpenGL ES program, and whilst it is running (or ideally paused so the shaders are static):
+<pre>
+$ sudo vcdbg reloc
+</pre>
+This gives for example (removing the non relevant entries):
+<pre>
+[  23] 0x1c509340: used  160 (refcount 3 lock count 0, size      116, align    4, data 0x1c509360, d0rual) 'EGL_SERVER_SURFACE_T'
+[  24] 0x1c5093e0: used 7.9M (refcount 512 lock count 511, size  8294400, align 4096, data 0x1c50a000, d1Rual) 'KHRN_IMAGE_T.storage'
+[  40] 0x1ccf33e0: used 7.9M (refcount 1 lock count 0, size  8294400, align 4096, data 0x1ccf4000, d1Rual) 'KHRN_IMAGE_T.storage'
+[  39] 0x1d4dd3e0: used 7.9M (refcount 1 lock count 0, size  8294400, align 4096, data 0x1d4de000, d1Rual) 'KHRN_IMAGE_T.storage'
+[  27] 0x1dcc73e0: used  160 (refcount 1 lock count 0, size      118, align    1, data 0x1dcc7400, d0rual) 'mem_strdup'
+[  42] 0x1dcc7480: used 1.2K (refcount 2 lock count 0, size     1200, align    4, data 0x1dcc74a0, d0rual) 'GL20_PROGRAM_T'
+[  26] 0x1dcc7960: used   64 (refcount 1 lock count 0, size       24, align    4, data 0x1dcc7980, d0rual) 'GL20_PROGRAM_T.uniform_data'
+[  25] 0x1dcc79a0: used  640 (refcount 2 lock count 0, size      588, align    4, data 0x1dcc79c0, d0rual) 'GLXX_BUFFER_T'
+[  37] 0x1dcc7c20: used   96 (refcount 1 lock count 0, size       64, align    4, data 0x1dcc7c40, D1rual) 'GLXX_BUFFER_INNER_T.storage'
+[  16] 0x1dcc7c80: used   96 (refcount 1 lock count 0, size       48, align    8, data 0x1dcc7ca0, d1rual) 'shader code'
+[  33] 0x1dcc7ce0: used  256 (refcount 1 lock count 0, size      216, align    8, data 0x1dcc7d00, d1rual) 'shader code'
+[  30] 0x1dcc7de0: used  128 (refcount 1 lock count 0, size       96, align    4, data 0x1dcc7e00, d0rual) 'uniform map'
+[  15] 0x1dcc7e60: used  256 (refcount 1 lock count 0, size      208, align    8, data 0x1dcc7e80, d1rual) 'shader code'
+[  28] 0x1dd381e0: used 3.0K (refcount 1 lock count 0, size     3072, align    4, data 0x1dd38200, d0RUal) 'GLSL_COPY_CONTEXT_T.mh_blob'
+[  29] 0x1dd38e00: used  128 (refcount 1 lock count 0, size       96, align    4, data 0x1dd38e20, d0rual) 'uniform map'
+</pre>
+The fragments can then be saved via:
+<pre>
+ $ sudo vcdbg save shader_code_1 0x1dcc7c80 96
+ $ sudo vcdbg save shader_code_2 0x1dcc7ce0 256
+ $ sudo vcdbg save shader_code_3 0x1dcc7e60 256
+
+ $ sudo vcdbg save uniform_map_1 0x1dcc7de0 128
+ $ sudo vcdbg save uniform_map_2 0x1dd38e00 128
+
+ $ sudo vcdbg save GL20_PROGRAM_T 0x1dcc7480 1200
+ $ sudo vcdbg save GL20_PROGRAM_T.uniform_data 0x1dcc7960 64
+ $ sudo vcdbg save GLXX_BUFFER_T 0x1dcc79a0 640
+ $ sudo vcdbg save GLXX_BUFFER_INNER_T.storage 0x1dcc7c20 96
+</pre>
+[View an analysis of some sample fragments](Traces1.md)
+
