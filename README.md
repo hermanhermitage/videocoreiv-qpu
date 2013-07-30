@@ -172,7 +172,7 @@ Where:
     000  (32) full 32 bit value
     001  16a  unpack from 16a
     010  16b  unpack from 16b
-    011  8dr   
+    011  8dr  unpack as 8d replicated, ie (d:8, d:8, d:8, d:8)
     100  8a   unpack from 8a
     101  8b   unpack from 8b
     110  8c   unpack from 8c
