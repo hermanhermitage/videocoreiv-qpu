@@ -164,46 +164,47 @@ Where:
   
   packbits control the packing/unpacking operation.
     Each 32 bit value can be viewed as (a:8, b:8, c:8, d:8) or (a:16, b:16)
-    uuu0pppp packbits apply to addop destination and second source.
+    uuu0pppp if X==0 packbits apply to addop destination and second source.
+             if X==1 packbits apply to mulop destination and second source.
     uuu1pppp packbits apply to mulop destination and second source.
     
   uuu unpacking add/mul source (rb)
-    000       full 32 bit value
+    000  (32) full 32 bit value
     001  16a  unpack from 16a
     010  16b  unpack from 16b
-    011   
+    011  8dr   
     100  8a   unpack from 8a
     101  8b   unpack from 8b
     110  8c   unpack from 8c
     111  8d   unpack from 8d
     
   0pppp pack add result
-    0000
-    0001
-    0010
-    0011
-    0100
-    0101
-    0110
-    0111
-    1000
-    1001
-    1010
-    1011
-    1100
-    1101
-    1110
-    1111
-    
+    0000  (32)
+    0001  16a
+    0010  16b
+    0011  8abcd
+    0100  8a
+    0101  8b
+    0110  8c
+    0111  8d
+    1000  s
+    1001  16as
+    1010  16bs
+    1011  8abcds
+    1100  8as
+    1101  8bs
+    1110  8cs
+    1111  8ds
+            
   1pppp pack mul result
-    0000
+    0000  (32)
     0001
     0010
-    0011
-    0100
-    0101
-    0110
-    0111
+    0011  8abcd
+    0100  8a
+    0101  8b
+    0110  8c
+    0111  8d
     1000
     1001
     1010
@@ -212,7 +213,7 @@ Where:
     1101
     1110
     1111 
-    
+            
   addcc holds the cc predicate for conditional execution of the add instruction.
   mulcc holds the cc predicate for conditional execution of the mul instruction.
     000 never
