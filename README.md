@@ -98,7 +98,23 @@ Encoding:
 Where:
 <pre>
   op is the signaling or control flow operation.
-
+    0000
+    0001
+    0010 thread-switch
+    0011 thread-end
+    0100 scoreboard-wait
+    0101 scoreboard-done
+    0110
+    0111
+    1000
+    1001
+    1010
+    1011
+    1100
+    1101
+    1110 ldi
+    1111 bra
+    
   mulop is the multiplication ALU operation.
     000 nop
     001 fmul
@@ -110,7 +126,39 @@ Where:
     111 subs8
     
   addop is the add ALU operation.
-  
+    00000 nop
+    00001 fadd
+    00010 fsub
+    00011 fmin
+    00100 fmax
+    00101 ftoi
+    00110 itof
+    00111
+    01000
+    01001
+    01010
+    01011
+    01100
+    01101
+    01110 
+    01111 
+    10000 
+    10001 
+    10010 
+    10011 
+    10100 
+    10101 
+    10110 
+    10111
+    11000
+    11001
+    11010
+    11011
+    11100
+    11101
+    11110 adds8
+    11111 subs8
+    
   adda, addb encode which accumulator or ra, rb value will be supplied to the add ALU.
   mula, mulb encode which accumulator or ra, rb value will be supplied to the multiplication ALU.
   
