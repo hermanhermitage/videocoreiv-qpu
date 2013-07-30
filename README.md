@@ -100,13 +100,24 @@ Where:
   op is the signaling or control flow operation.
 
   mulop is the multiplication ALU operation.
+    000 nop
+    001 fmul
+    010 
+    011 muld8
+    100 min8
+    101 max8
+    110 adds8
+    111 subs8
+    
   addop is the add ALU operation.
   
   adda, addb encode which accumulator or ra, rb value will be supplied to the add ALU.
   mula, mulb encode which accumulator or ra, rb value will be supplied to the multiplication ALU.
   
   packbits control the packing/unpacking operation.
-  
+    ppp0uuuu packbits apply to addop destination and second source.
+    ppp1uuuu packbits apply to mulop destination and second source.
+    
   addcc holds the cc predicate for conditional execution of the add instruction.
   mulcc holds the cc predicate for conditional execution of the mul instruction.
     000 never
