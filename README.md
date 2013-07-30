@@ -167,7 +167,9 @@ Where:
     uuu0pppp if X==0 packbits apply to addop destination and second source.
              if X==1 packbits apply to mulop destination and second source.
     uuu1pppp packbits apply to mulop destination and second source.
-    
+  (Only registers and not accumulators can be unpacked, but either can be packed.
+   In shaders its not uncommon to see round tripping thru registers).
+   
   uuu unpacking add/mul source (rb)
     000  (32) full 32 bit value
     001  16a  unpack from 16a
