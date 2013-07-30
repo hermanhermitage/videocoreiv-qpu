@@ -99,19 +99,19 @@ Where:
 <pre>
   op is the signaling or control flow operation.
     0000
-    0001
+    0001 nop
     0010 thread-switch
     0011 thread-end
     0100 scoreboard-wait
     0101 scoreboard-done
-    0110
-    0111
-    1000
-    1001
-    1010
-    1011
-    1100
-    1101
+    0110 last-thread-switch
+    0111 (openvg coverage?)
+    1000 load-gl_FragColor
+    1001 load-gl_FragColor-and-thread-end
+    1010 load-tmu0
+    1011 load-tmu1
+    1100 (openvg alpha mask?)
+    1101 nop
     1110 ldi
     1111 bra
     
@@ -131,26 +131,26 @@ Where:
     00010 fsub
     00011 fmin
     00100 fmax
-    00101 ftoi
-    00110 itof
-    00111
-    01000
+    00101 
+    00110 
+    00111 ftoi
+    01000 itof
     01001
     01010
     01011
-    01100
-    01101
-    01110 
-    01111 
-    10000 
-    10001 
-    10010 
-    10011 
-    10100 
-    10101 
-    10110 
-    10111
-    11000
+    01100 add
+    01101 sub
+    01110 shr
+    01111 asr
+    10000 ror
+    10001 shl
+    10010 min
+    10011 max
+    10100 and
+    10101 or
+    10110 xor
+    10111 not
+    11000 
     11001
     11010
     11011
