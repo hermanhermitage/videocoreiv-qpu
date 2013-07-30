@@ -99,65 +99,65 @@ Where:
 <pre>
   op is the signaling or control flow operation.
     0000
-    0001 nop
-    0010 thread-switch
-    0011 thread-end
-    0100 scoreboard-wait
-    0101 scoreboard-done
-    0110 last-thread-switch
-    0111 (openvg coverage?)
-    1000 load-gl_FragColor
-    1001 load-gl_FragColor-and-thread-end
-    1010 load-tmu0
-    1011 load-tmu1
-    1100 (openvg alpha mask?)
-    1101 nop
-    1110 ldi
-    1111 bra
+    0001  nop
+    0010  thread-switch
+    0011  thread-end
+    0100  scoreboard-wait
+    0101  scoreboard-done
+    0110  last-thread-switch
+    0111  (openvg coverage?)
+    1000  load-gl_FragColor
+    1001  load-gl_FragColor-and-thread-end
+    1010  load-tmu0
+    1011  load-tmu1
+    1100  (openvg alpha mask?)
+    1101  nop
+    1110  ldi
+    1111  bra
     
   mulop is the multiplication ALU operation.
-    000 nop
-    001 fmul
+    000  nop
+    001  fmul   rd = ra * rb
     010 
-    011 muld8
-    100 min8
-    101 max8
-    110 adds8
-    111 subs8
+    011  muld8  rd[i] = ra[i] * rb[3], i = 0..3 / a..d
+    100  min8   rd[i] = min(ra[i], rb[i]), i = 0..3 / a..d
+    101  max8   rd[i] = max(ra[i], rb[i]), i = 0..3 / a..d
+    110  adds8  rd[i] = sat8(ra[i] + rb[i]), i = 0..3 / a..d
+    111  subs8  rd[i] = sat8(ra[i] - rb[i]), i = 0..3 / a..d
     
   addop is the add ALU operation.
-    00000 nop
-    00001 fadd
-    00010 fsub
-    00011 fmin
-    00100 fmax
+    00000  nop
+    00001  fadd  rd = ra + rb         (floating point addition)
+    00010  fsub  rd = ra - rb         (floating point subtraction)
+    00011  fmin  rd = fmin(ra, rb)    (floating point minimum)
+    00100  fmax  rd = fmax(ra, rb)    (floating point maximum)
     00101 
     00110 
-    00111 ftoi
-    01000 itof
+    00111  ftoi  rd = int(rb)         (convert float to int)
+    01000  itof  rd = float(rb)       (convert int to float)
     01001
     01010
     01011
-    01100 add
-    01101 sub
-    01110 shr
-    01111 asr
-    10000 ror
-    10001 shl
-    10010 min
-    10011 max
-    10100 and
-    10101 or
-    10110 xor
-    10111 not
+    01100  add   rd = ra + rb         (integer addition)
+    01101  sub   rd = ra - rb         (integer subtraction)
+    01110  shr   rd = ra &gt;&gt;&gt; rb       (logical shift right)
+    01111  asr   rd = ra &gt;&gt; rb        (arithmetic shift right)
+    10000  ror   rd = ror(ra, rb)     (rotate right)
+    10001  shl   rd = ra &lt;&lt; rb        (logical shift left)
+    10010  min   rd = min(ra, rb)     (integer min)
+    10011  max   rd = max(ra, rb)     (integer max)
+    10100  and   rd = ra & rb         (bitwise and)
+    10101  or    rd = ra | rb         (bitwise or)
+    10110  xor   rd = ra ^ rb         (bitwise xor)
+    10111  not   rd = ~rb             (bitwise not)
     11000 
     11001
     11010
     11011
     11100
     11101
-    11110 adds8
-    11111 subs8
+    11110  adds8                      rd[i] = sat8(ra[i]+rb[i]), i = 0..3 / a..d
+    11111  subs8                      rd[i] = sat8(ra[i]-rb[i]), i = 0..3 / a..d
     
   adda, addb encode which accumulator or ra, rb value will be supplied to the add ALU.
   mula, mulb encode which accumulator or ra, rb value will be supplied to the multiplication ALU.
