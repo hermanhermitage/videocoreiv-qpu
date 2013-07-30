@@ -178,6 +178,9 @@ Where:
     111 carry clear
     
   F is set to update cc flags (there are Zero, Negative and Carry flags per unit) - SETF
+    Normally the result of the add operation is used to determine the new cc flags.
+    If the add operation is a nop, then the result of the multiply operation is used.
+    
   X is set to exchange values on the writeback (ie the crossed lines in the diagram).
 
   ra is register bank A value to read.
