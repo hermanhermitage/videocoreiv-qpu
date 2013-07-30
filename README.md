@@ -163,8 +163,55 @@ Where:
   mula, mulb encode which accumulator or ra, rb value will be supplied to the multiplication ALU.
   
   packbits control the packing/unpacking operation.
+    Each 32 bit value can be viewed as (a:8, b:8, c:8, d:8) or (a:16, b:16)
     ppp0uuuu packbits apply to addop destination and second source.
     ppp1uuuu packbits apply to mulop destination and second source.
+    
+  ppp packing add/mul results
+    000       write back normally
+    001  16a  pack into 16a
+    010  16b  pack into 16b
+    011   
+    100  8a   pack into 8a
+    101  8b   pack into 8b
+    110  8c   pack into 8c
+    111  8d   pack into 8d
+    
+  0uuuu unpacking add second source
+    0000
+    0001
+    0010
+    0011
+    0100
+    0101
+    0110
+    0111
+    1000
+    1001
+    1010
+    1011
+    1100
+    1101
+    1110
+    1111
+    
+  1uuuu unpack mul second source
+    0000
+    0001
+    0010
+    0011
+    0100
+    0101
+    0110
+    0111
+    1000
+    1001
+    1010
+    1011
+    1100
+    1101
+    1110
+    1111 
     
   addcc holds the cc predicate for conditional execution of the add instruction.
   mulcc holds the cc predicate for conditional execution of the mul instruction.
