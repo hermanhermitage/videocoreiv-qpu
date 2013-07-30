@@ -164,20 +164,20 @@ Where:
   
   packbits control the packing/unpacking operation.
     Each 32 bit value can be viewed as (a:8, b:8, c:8, d:8) or (a:16, b:16)
-    ppp0uuuu packbits apply to addop destination and second source.
-    ppp1uuuu packbits apply to mulop destination and second source.
+    uuu0pppp packbits apply to addop destination and second source.
+    uuu1pppp packbits apply to mulop destination and second source.
     
-  ppp packing add/mul results
-    000       write back normally
-    001  16a  pack into 16a
-    010  16b  pack into 16b
+  uuu unpacking add/mul source (rb)
+    000       full 32 bit value
+    001  16a  unpack from 16a
+    010  16b  unpack from 16b
     011   
-    100  8a   pack into 8a
-    101  8b   pack into 8b
-    110  8c   pack into 8c
-    111  8d   pack into 8d
+    100  8a   unpack from 8a
+    101  8b   unpack from 8b
+    110  8c   unpack from 8c
+    111  8d   unpack from 8d
     
-  0uuuu unpacking add second source
+  0pppp pack add result
     0000
     0001
     0010
@@ -195,7 +195,7 @@ Where:
     1110
     1111
     
-  1uuuu unpack mul second source
+  1pppp pack mul result
     0000
     0001
     0010
