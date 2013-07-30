@@ -98,32 +98,32 @@ Encoding:
 Where:
 <pre>
   op is the signaling or control flow operation.
-    0000
-    0001  nop
-    0010  thread-switch
-    0011  thread-end
-    0100  scoreboard-wait
-    0101  scoreboard-done
-    0110  last-thread-switch
-    0111  (openvg coverage?)
-    1000  load-gl_FragColor
-    1001  load-gl_FragColor-and-thread-end
-    1010  load-tmu0
-    1011  load-tmu1
-    1100  (openvg alpha mask?)
-    1101  nop
-    1110  ldi
-    1111  bra
+     0000
+     0001  nop
+     0010  thread-switch
+     0011  thread-end
+     0100  scoreboard-wait
+     0101  scoreboard-done
+     0110  last-thread-switch
+     0111  (openvg coverage?)
+     1000  load-gl_FragColor
+     1001  load-gl_FragColor-and-thread-end
+     1010  load-tmu0
+     1011  load-tmu1
+     1100  (openvg alpha mask?)
+     1101  nop
+     1110  ldi
+     1111  bra
     
   mulop is the multiplication ALU operation.
-    000  nop
-    001  fmul   rd = ra * rb
-    010 
-    011  muld8  rd[i] = ra[i] * rb[3], i = 0..3 / a..d
-    100  min8   rd[i] = min(ra[i], rb[i]), i = 0..3 / a..d
-    101  max8   rd[i] = max(ra[i], rb[i]), i = 0..3 / a..d
-    110  adds8  rd[i] = sat8(ra[i] + rb[i]), i = 0..3 / a..d
-    111  subs8  rd[i] = sat8(ra[i] - rb[i]), i = 0..3 / a..d
+      000  nop
+      001  fmul   rd = ra * rb
+      010 
+      011  muld8  rd[i] = ra[i] * rb[3], i = 0..3 / a..d
+      100  min8   rd[i] = min(ra[i], rb[i]), i = 0..3 / a..d
+      101  max8   rd[i] = max(ra[i], rb[i]), i = 0..3 / a..d
+      110  adds8  rd[i] = sat8(ra[i] + rb[i]), i = 0..3 / a..d
+      111  subs8  rd[i] = sat8(ra[i] - rb[i]), i = 0..3 / a..d
     
   addop is the add ALU operation.
     00000  nop
