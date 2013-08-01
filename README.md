@@ -96,40 +96,12 @@ the work here becomes useful the names are common for anyone doing this in a com
 Encoding:
 <pre>
   mulop:3 addop:5 ra:6 rb:6 adda:3 addb:3 mula:3 mulb:3, op:4 packbits:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
+  mulop:3 addop:5 ra:6 imm:6 adda:3 addb:3 mula:3 mulb:3, 1101 packbits:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
+  
 </pre>
 
 Where:
 <pre>
-  op is the signaling or control flow operation.
-     0000  bpkt
-     0001  nop
-     0010  thrsw   thread switch
-     0011  thrend  thread end
-     0100  sbwait  scoreboard wait
-     0101  sbdone  scoreboard done
-     0110  lthrsw  last thread switch
-     0111  loadcv
-     1000  loadc   load tlb color
-     1001  ldcend  load tlb color and thread end
-     1010  ldtmu0  load tmu0
-     1011  ldtmu1  load tmu1
-     1100  loadam  
-     1101  nop     (small constant encoded in field)
-     1110  ldi     load immediate
-     1111  bra     branch
-  (Replacing the following names, thread-switch, thread-end, scoreboard-wait, scoreboard-done, last-thread-switch, 
-   (openvg coverage?), load-gl_FragColor, load-gl_FragColor-and-thread-end, load-tmu0, load-tmu1, (openvg alpha mask?))
-    
-  mulop is the multiplication ALU operation.
-      000  nop
-      001  fmul    rd = ra * rb
-      010  mul24
-      011  v8muld  rd[i] = ra[i] * rb[3], i = 0..3 / a..d
-      100  v8min   rd[i] = min(ra[i], rb[i]), i = 0..3 / a..d
-      101  v8max   rd[i] = max(ra[i], rb[i]), i = 0..3 / a..d
-      110  v8adds  rd[i] = sat8(ra[i] + rb[i]), i = 0..3 / a..d
-      111  v8subs  rd[i] = sat8(ra[i] - rb[i]), i = 0..3 / a..d
-    
   addop is the add ALU operation.
     00000  nop
     00001  fadd     rd = ra + rb         (floating point addition)
@@ -164,6 +136,38 @@ Where:
     11110  v8adds   rd[i] = sat8(ra[i]+rb[i]), i = 0..3 / a..d
     11111  v8subs   rd[i] = sat8(ra[i]-rb[i]), i = 0..3 / a..d
     
+  mulop is the multiplication ALU operation.
+      000  nop
+      001  fmul    rd = ra * rb
+      010  mul24
+      011  v8muld  rd[i] = ra[i] * rb[3], i = 0..3 / a..d
+      100  v8min   rd[i] = min(ra[i], rb[i]), i = 0..3 / a..d
+      101  v8max   rd[i] = max(ra[i], rb[i]), i = 0..3 / a..d
+      110  v8adds  rd[i] = sat8(ra[i] + rb[i]), i = 0..3 / a..d
+      111  v8subs  rd[i] = sat8(ra[i] - rb[i]), i = 0..3 / a..d
+      
+  op is the signaling or control flow operation.
+     0000  bpkt
+     0001  nop
+     0010  thrsw   thread switch
+     0011  thrend  thread end
+     0100  sbwait  scoreboard wait
+     0101  sbdone  scoreboard done
+     0110  lthrsw  last thread switch
+     0111  loadcv
+     1000  loadc   load tlb color
+     1001  ldcend  load tlb color and thread end
+     1010  ldtmu0  load tmu0
+     1011  ldtmu1  load tmu1
+     1100  loadam  
+     1101  nop     (small constant encoded in field rb)
+     1110  ldi     load immediate
+     1111  bra     branch
+     
+  (Replacing the following names, thread-switch, thread-end, scoreboard-wait, scoreboard-done, last-thread-switch, 
+   (openvg coverage?), load-gl_FragColor, load-gl_FragColor-and-thread-end, load-tmu0, load-tmu1,
+   (openvg alpha mask?))
+   
   adda, addb encode which accumulator or ra, rb value will be supplied to the add ALU.
   mula, mulb encode which accumulator or ra, rb value will be supplied to the multiplication ALU.
   
@@ -267,7 +271,7 @@ Where:
     001100  ra12       rb12       ra12       rb12
     001101  ra13       rb13       ra13       rb13
     001110  ra14       rb14       ra14       rb14
-    001111  w          z          w          w
+    001111  w          z          w          w?
     001000  ra16       rb16       ra16       rb16
     001001  ra17       rb17       ra17       rb17
     001010  ra18       rb18       ra18       rb18
@@ -288,8 +292,8 @@ Where:
     100001                        A1         A1         
     100010                        A2         A2         
     100011  vary       vary       A3         A3         
-    100100                        A4         A4         
-    100101                        A5         A5         
+    100100                        tmurs      tmurs         
+    100101                        A5quad     A5quad         
     100110  elem_num   qpu_num    irq?       irq?
     100111  (nop)      (nop)      (nop)      (nop)
     101000                        unif_addr  unif_addr
@@ -316,6 +320,16 @@ Where:
     101000                        t1t        t1t
     101000                        t1r        t1r
     101000                        t1b        t1b  
+      
+  rb - Small constants, active when signal/control operation is 1101:
+  
+    imm      ra       rb
+ 
+    0  i:5   ra        i            Signed 4 bit immediate
+    10 i:4   ra        1.0 &lt;&lt; i     Shift by signed 4 bit quantity   
+    11 0000  ra &gt;&gt; A5  -
+    11 d:4   ra &gt;&gt; d   -                
+    
 </pre>
 
 #### Branches:
