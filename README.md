@@ -300,7 +300,7 @@ Where:
     100010                        A2         A2         
     100011  vary       vary       A3         A3         
     100100                        tmurs      tmurs         
-    100101                        A5quad     A5quad         
+    100101                        A5quad     A5rep         
     100110  elem_num   qpu_num    irq?       irq?
     100111  (nop)      (nop)      (nop)      (nop)
     101000                        unif_addr  unif_addr
