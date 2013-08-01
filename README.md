@@ -78,6 +78,9 @@ In recommended reading order:
 - Instructions may include a signalling field (US20110227920-0107) without costing an additional instruction.  Typical uses include tile buffer access, or end of program / thread switch (both with 2 delay slots).
 
 ### Instruction Encodings
+I'm realigning the names with those found in some of the blobs.  For instance thread-switch becomes thrsw, gl_FragColor
+becomes tlbc, min8 becomes v8min and so forth.  The main purpose of this change is in the vain hope that if any of
+the work here becomes useful the names are common for anyone doing this in a commercial context.
 
 #### Add/Mul Operations:
 <pre>
@@ -98,66 +101,68 @@ Encoding:
 Where:
 <pre>
   op is the signaling or control flow operation.
-     0000
+     0000  bpkt
      0001  nop
-     0010  thread-switch
-     0011  thread-end
-     0100  scoreboard-wait
-     0101  scoreboard-done
-     0110  last-thread-switch
-     0111  (openvg coverage?)
-     1000  load-gl_FragColor
-     1001  load-gl_FragColor-and-thread-end
-     1010  load-tmu0
-     1011  load-tmu1
-     1100  (openvg alpha mask?)
-     1101  nop
-     1110  ldi
-     1111  bra
+     0010  thrsw   thread switch
+     0011  thrend  thread end
+     0100  sbwait  scoreboard wait
+     0101  sbdone  scoreboard done
+     0110  lthrsw  last thread switch
+     0111  loadcv
+     1000  loadc   load tlb color
+     1001  ldcend  load tlb color and thread end
+     1010  ldtmu0  load tmu0
+     1011  ldtmu1  load tmu1
+     1100  loadam  
+     1101  nop     (small constant encoded in field)
+     1110  ldi     load immediate
+     1111  bra     branch
+  (Replacing the following names, thread-switch, thread-end, scoreboard-wait, scoreboard-done, last-thread-switch, 
+   (openvg coverage?), load-gl_FragColor, load-gl_FragColor-and-thread-end, load-tmu0, load-tmu1, (openvg alpha mask?))
     
   mulop is the multiplication ALU operation.
       000  nop
-      001  fmul   rd = ra * rb
-      010 
-      011  muld8  rd[i] = ra[i] * rb[3], i = 0..3 / a..d
-      100  min8   rd[i] = min(ra[i], rb[i]), i = 0..3 / a..d
-      101  max8   rd[i] = max(ra[i], rb[i]), i = 0..3 / a..d
-      110  adds8  rd[i] = sat8(ra[i] + rb[i]), i = 0..3 / a..d
-      111  subs8  rd[i] = sat8(ra[i] - rb[i]), i = 0..3 / a..d
+      001  fmul    rd = ra * rb
+      010  mul24
+      011  v8muld  rd[i] = ra[i] * rb[3], i = 0..3 / a..d
+      100  v8min   rd[i] = min(ra[i], rb[i]), i = 0..3 / a..d
+      101  v8max   rd[i] = max(ra[i], rb[i]), i = 0..3 / a..d
+      110  v8adds  rd[i] = sat8(ra[i] + rb[i]), i = 0..3 / a..d
+      111  v8subs  rd[i] = sat8(ra[i] - rb[i]), i = 0..3 / a..d
     
   addop is the add ALU operation.
     00000  nop
-    00001  fadd  rd = ra + rb         (floating point addition)
-    00010  fsub  rd = ra - rb         (floating point subtraction)
-    00011  fmin  rd = fmin(ra, rb)    (floating point minimum)
-    00100  fmax  rd = fmax(ra, rb)    (floating point maximum)
-    00101 
-    00110 
-    00111  ftoi  rd = int(rb)         (convert float to int)
-    01000  itof  rd = float(rb)       (convert int to float)
+    00001  fadd     rd = ra + rb         (floating point addition)
+    00010  fsub     rd = ra - rb         (floating point subtraction)
+    00011  fmin     rd = fmin(ra, rb)    (floating point minimum)
+    00100  fmax     rd = fmax(ra, rb)    (floating point maximum)
+    00101  fminabs  rd = fminabs(ra, rb)
+    00110  fmaxabs  rd = fmaxabs(ra, rb)
+    00111  ftoi     rd = int(rb)         (convert float to int)
+    01000  itof     rd = float(rb)       (convert int to float)
     01001
     01010
     01011
-    01100  add   rd = ra + rb         (integer addition)
-    01101  sub   rd = ra - rb         (integer subtraction)
-    01110  shr   rd = ra &gt;&gt;&gt; rb       (logical shift right)
-    01111  asr   rd = ra &gt;&gt; rb        (arithmetic shift right)
-    10000  ror   rd = ror(ra, rb)     (rotate right)
-    10001  shl   rd = ra &lt;&lt; rb        (logical shift left)
-    10010  min   rd = min(ra, rb)     (integer min)
-    10011  max   rd = max(ra, rb)     (integer max)
-    10100  and   rd = ra & rb         (bitwise and)
-    10101  or    rd = ra | rb         (bitwise or)
-    10110  xor   rd = ra ^ rb         (bitwise xor)
-    10111  not   rd = ~rb             (bitwise not)
-    11000 
+    01100  add      rd = ra + rb         (integer addition)
+    01101  sub      rd = ra - rb         (integer subtraction)
+    01110  shr      rd = ra &gt;&gt;&gt; rb       (logical shift right)
+    01111  asr      rd = ra &gt;&gt; rb        (arithmetic shift right)
+    10000  ror      rd = ror(ra, rb)     (rotate right)
+    10001  shl      rd = ra &lt;&lt; rb        (logical shift left)
+    10010  min      rd = min(ra, rb)     (integer min)
+    10011  max      rd = max(ra, rb)     (integer max)
+    10100  and      rd = ra & rb         (bitwise and)
+    10101  or       rd = ra | rb         (bitwise or)
+    10110  xor      rd = ra ^ rb         (bitwise xor)
+    10111  not      rd = ~rb             (bitwise not)
+    11000  clz      rd = clz(rb)         (count leading zeros)
     11001
     11010
     11011
     11100
     11101
-    11110  adds8                      rd[i] = sat8(ra[i]+rb[i]), i = 0..3 / a..d
-    11111  subs8                      rd[i] = sat8(ra[i]-rb[i]), i = 0..3 / a..d
+    11110  v8adds   rd[i] = sat8(ra[i]+rb[i]), i = 0..3 / a..d
+    11111  v8subs   rd[i] = sat8(ra[i]-rb[i]), i = 0..3 / a..d
     
   adda, addb encode which accumulator or ra, rb value will be supplied to the add ALU.
   mula, mulb encode which accumulator or ra, rb value will be supplied to the multiplication ALU.
@@ -218,14 +223,14 @@ Where:
             
   addcc holds the cc predicate for conditional execution of the add instruction.
   mulcc holds the cc predicate for conditional execution of the mul instruction.
-    000 never
-    001 always
-    010 zero set
-    011 zero clear
-    100 negative set
-    101 negative clear
-    110 carry set
-    111 carry clear
+    000  .never  never
+    001          always
+    010  .zs     zero set
+    011  .zc     zero clear
+    100  .ns     negative set
+    101  .nc     negative clear
+    110  .cs     carry set
+    111  .cc     carry clear
     
   F is set to update cc flags (there are Zero, Negative and Carry flags per unit) - SETF
     Normally the result of the add operation is used to determine the new cc flags.
@@ -260,18 +265,18 @@ Where:
   addr is the target address
 
   cond is the condition code:
-    0000 all zero set
-    0001 all zero clear
-    0010 any zero set
-    0011 any zero clear
-    0100 all negative set
-    0101 all negative clear
-    0110 any negative set
-    0111 any negative clear
-    1000 all carry set
-    1001 all carry clear
-    1010 any carry set
-    1011 any carry clear
+    0000  .allz   all zero set
+    0001  .allnz  all zero clear
+    0010  .anyz   any zero set
+    0011  .anynz  any zero clear
+    0100  .alln   all negative set
+    0101  .allnn  all negative clear
+    0110  .anyn   any negative set
+    0111  .anynn  any negative clear
+    1000  .allc   all carry set
+    1001  .allnc  all carry clear
+    1010  .allcs  any carry set
+    1011  .allcc  any carry clear
     xxxx unknown
 
   relative is set if the target is relative.
