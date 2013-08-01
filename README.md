@@ -239,13 +239,58 @@ Where:
   X is set to exchange values on the writeback (ie the crossed lines in the diagram).
 
   ra is register bank A value to read.
-  rb is register bank V value to read.
-  wa is destination for the add or mul result (depends on X).
-  wb is destination for the add or mul result (depends on X).
     ra0..ra31 are registers, whilst ra32..ra63 are peripheral addresses.
+  
+
+   
+  rb is register bank Bvalue to read.
     rb0..rb31 are registers, whilst rb32..rb63 are peripheral addresses.
+
+  wa is destination for the add or mul result (depends on X).
     for wa, except addresses 32...35 write back to accumulators a0...a3
+    
+    000000  ra01
+    ...
+    001111  w
+    ...
+    011111  ra31
+    100000  A0
+    100001  A1
+    100010  A2
+    100011  A3
+    100100  tmurs
+    100101  r5quad
+    100110  xa38 (irq?)
+    100111  -              no access (ie for nop instructions)
+    101000  unif_addr
+    101000  x_coord
+    101000  ms_mask
+    101000  stencil
+    101000  tlbz
+    101000  tlbm
+    101000  tlbc
+    101000  xa47 (tlbam? from OpenVG shaders)
+    101000  vpm 
+    101000  vr_setup 
+    101000  vr_addr 
+    101000  mutex 
+    101000  recip 
+    101000  recipsqrt 
+    101000  exp 
+    101000  log
+    101000  t0s 
+    101000  t0t 
+    101000  t0r 
+    101000  t0b 
+    101000  t1s 
+    101000  t1t 
+    101000  t1r 
+    101000  t1b
+    
+  wb is destination for the add or mul result (depends on X).
     for wb, except addresses 32...35 write back to accumulators a0...a3
+    
+  
 </pre>
 
 #### Branches:
