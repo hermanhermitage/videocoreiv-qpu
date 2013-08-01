@@ -240,57 +240,82 @@ Where:
 
   ra is register bank A value to read.
     ra0..ra31 are registers, whilst ra32..ra63 are peripheral addresses.
-  
-
-   
+    
   rb is register bank Bvalue to read.
     rb0..rb31 are registers, whilst rb32..rb63 are peripheral addresses.
 
   wa is destination for the add or mul result (depends on X).
     for wa, except addresses 32...35 write back to accumulators a0...a3
-    
-    000000  ra01
-    ...
-    001111  w
-    ...
-    011111  ra31
-    100000  A0
-    100001  A1
-    100010  A2
-    100011  A3
-    100100  tmurs
-    100101  r5quad
-    100110  xa38 (irq?)
-    100111  -              no access (ie for nop instructions)
-    101000  unif_addr
-    101000  x_coord
-    101000  ms_mask
-    101000  stencil
-    101000  tlbz
-    101000  tlbm
-    101000  tlbc
-    101000  xa47 (tlbam? from OpenVG shaders)
-    101000  vpm 
-    101000  vr_setup 
-    101000  vr_addr 
-    101000  mutex 
-    101000  recip 
-    101000  recipsqrt 
-    101000  exp 
-    101000  log
-    101000  t0s 
-    101000  t0t 
-    101000  t0r 
-    101000  t0b 
-    101000  t1s 
-    101000  t1t 
-    101000  t1r 
-    101000  t1b
-    
+      
   wb is destination for the add or mul result (depends on X).
-    for wb, except addresses 32...35 write back to accumulators a0...a3
+    for wb, except addresses 32...35 write back to accumulators a0...a3  
     
-  
+            ra         rb         wa         wb
+            
+    000000  ra00       rb00       ra00       rb00
+    000001  ra01       rb01       ra01       rb01
+    000010  ra02       rb02       ra02       rb02
+    000011  ra03       rb03       ra03       rb03
+    000100  ra04       rb04       ra04       rb04
+    000101  ra05       rb05       ra05       rb05
+    000110  ra06       rb06       ra06       rb06
+    000111  ra07       rb07       ra07       rb07
+    001000  ra08       rb08       ra08       rb08
+    001001  ra09       rb09       ra09       rb09
+    001010  ra10       rb10       ra10       rb10
+    001011  ra11       rb11       ra11       rb11
+    001100  ra12       rb12       ra12       rb12
+    001101  ra13       rb13       ra13       rb13
+    001110  ra14       rb14       ra14       rb14
+    001111  w          z          w          w
+    001000  ra16       rb16       ra16       rb16
+    001001  ra17       rb17       ra17       rb17
+    001010  ra18       rb18       ra18       rb18
+    001011  ra19       rb19       ra19       rb19
+    001100  ra20       rb20       ra20       rb20
+    001101  ra21       rb21       ra21       rb21
+    001110  ra22       rb22       ra22       rb22
+    001111  ra23       rb23       ra23       rb23
+    011000  ra24       rb24       ra24       rb24
+    011001  ra25       rb25       ra25       rb25
+    011010  ra26       rb26       ra26       rb26
+    011011  ra27       rb27       ra27       rb27
+    011100  ra28       rb28       ra28       rb28
+    011101  ra29       rb29       ra29       rb29
+    011110  ra30       rb30       ra30       rb30
+    011111  ra31       rb31       ra31       rb31
+    100000  unif       unif       A0         A0         
+    100001                        A1         A1         
+    100010                        A2         A2         
+    100011  vary       vary       A3         A3         
+    100100                        A4         A4         
+    100101                        A5         A5         
+    100110  elem_num   qpu_num    irq?       irq?
+    100111  (nop)      (nop)      (nop)      (nop)
+    101000                        unif_addr  unif_addr
+    101000  x_coord    y_coord    x_coord    y_coord
+    101000  ms_mask    rev_flag   ms_mask    rev_flag
+    101000                        stencil    stencil
+    101000                        tlbz       tlbz       
+    101000                        tlbm       tlbm       
+    101000                        tlbc       tlbc       
+    101000                        tlbam?     tlbam?     
+    101000  vpm        vpm        vpm        vpm        
+    101000  vr_busy    vw_busy    vr_setup   vw_setup   
+    101000  vr_wait    vw_wait    vr_addr    vw_addr
+    101000  mutex      mutex      mutex      mutex
+    101000                        recip      recip
+    101000                        recipsqrt  recipsqrt
+    101000                        exp        exp
+    101000                        log        log
+    101000                        t0s        t0s
+    101000                        t0t        t0t
+    101000                        t0r        t0r
+    101000                        t0b        t0b
+    101000                        t1s        t1s
+    101000                        t1t        t1t
+    101000                        t1r        t1r
+    101000                        t1b        t1b  
 </pre>
 
 #### Branches:
