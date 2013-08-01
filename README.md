@@ -97,7 +97,6 @@ Encoding:
 <pre>
   mulop:3 addop:5 ra:6 rb:6 adda:3 addb:3 mula:3 mulb:3, op:4 packbits:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
   mulop:3 addop:5 ra:6 imm:6 adda:3 addb:3 mula:3 mulb:3, 1101 packbits:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
-  
 </pre>
 
 Where:
@@ -170,6 +169,14 @@ Where:
    
   adda, addb encode which accumulator or ra, rb value will be supplied to the add ALU.
   mula, mulb encode which accumulator or ra, rb value will be supplied to the multiplication ALU.
+    000  A0
+    001  A1
+    010  A2
+    011  A3
+    100  A4
+    101  A5
+    110  ra
+    111  rb
   
   packbits control the packing/unpacking operation.
     Each 32 bit value can be viewed as (a:8, b:8, c:8, d:8) or (a:16, b:16)
