@@ -169,14 +169,14 @@ Where:
    
   adda, addb encode which accumulator or ra, rb value will be supplied to the add ALU.
   mula, mulb encode which accumulator or ra, rb value will be supplied to the multiplication ALU.
-    000  A0
-    001  A1
-    010  A2
-    011  A3
-    100  A4
-    101  A5
-    110  ra
-    111  rb
+    000  r0  accumulator 0
+    001  r1  accumulator 1
+    010  r2  accumulator 2
+    011  r3  accumulator 3
+    100  r4  accumulator 4
+    101  r5  accumulator 5
+    110  ra  register from bank a
+    111  rb  regoster from bank b
   
   packbits control the packing/unpacking operation.
     Each 32 bit value can be viewed as (a:8, b:8, c:8, d:8) or (a:16, b:16)
@@ -256,10 +256,10 @@ Where:
     rb0..rb31 are registers, whilst rb32..rb63 are peripheral addresses.
 
   wa is destination for the add or mul result (depends on X).
-    for wa, except addresses 32...35 write back to accumulators a0...a3
+    ra0..ra31 are registers, whilst ra32..ra63 are peripheral addresses.
       
   wb is destination for the add or mul result (depends on X).
-    for wb, except addresses 32...35 write back to accumulators a0...a3  
+    rb0..rb31 are registers, whilst rb32..rb63 are peripheral addresses.
     
             ra         rb         wa         wb
             
@@ -295,12 +295,12 @@ Where:
     011101  ra29       rb29       ra29       rb29
     011110  ra30       rb30       ra30       rb30
     011111  ra31       rb31       ra31       rb31
-    100000  unif       unif       A0         A0         
-    100001                        A1         A1         
-    100010                        A2         A2         
-    100011  vary       vary       A3         A3         
+    100000  unif       unif       r0         r0         
+    100001                        r1         r1         
+    100010                        r2         r2         
+    100011  vary       vary       r3         r3         
     100100                        tmurs      tmurs         
-    100101                        A5quad     A5rep         
+    100101                        r5quad     r5rep         
     100110  elem_num   qpu_num    irq?       irq?
     100111  (nop)      (nop)      (nop)      (nop)
     101000                        unif_addr  unif_addr
@@ -403,6 +403,7 @@ Example:
 - Third fragment is the coordinate shader (vertex shader only concerned with Vertex positions - used for tiling).
 
 <pre>
+
 vs/null.vs:
 void main(void) {
 }
@@ -415,44 +416,44 @@ void main(void) {
   gl_FragColor = c1+c2;
 }
 
-('shader code' 1c50acc0 88)
-00000000: 15827d80 10020827 packbits=0x00; addop21<cc1> io32, io32, io32; mulop00<cc0> io39, A0, A0; op01
-00000002: 01827c00 40020867 packbits=0x00; addop01<cc1> io33, io32, A0; mulop00<cc0> io39, A0, A0; op04
-00000004: 15827d80 10020827 packbits=0x00; addop21<cc1> io32, io32, io32; mulop00<cc0> io39, A0, A0; op01
-00000006: 01827c00 10020827 packbits=0x00; addop01<cc1> io32, io32, A0; mulop00<cc0> io39, A0, A0; op01
-00000008: 95827d80 114258a0 packbits=0x14; addop21<cc1> io34, io32, io32; mulop04<cc1> io32, A0, A0; op01
-0000000a: 81827c89 11525860 packbits=0x15; addop01<cc1> io33, io32, A2; mulop04<cc1> io32, A1, A1; op01
-0000000c: 95827d89 11625860 packbits=0x16; addop21<cc1> io33, io32, io32; mulop04<cc1> io32, A1, A1; op01
-0000000e: 01827c40 10020867 packbits=0x00; addop01<cc1> io33, io32, A1; mulop00<cc0> io39, A0, A0; op01
-00000010: 809e7009 317059e0 packbits=0x17; addop00<cc0> io39, A0, A0; mulop04<cc1> io32, A1, A1; op03
-00000012: 159e7000 10020ba7 packbits=0x00; addop21<cc1> io46, A0, A0; mulop00<cc0> io39, A0, A0; op01
-00000014: 009e7000 500009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op05
+('shader code' 18402720 88)
+00000000: 15827d80 10020827 mov r0, unif
+00000002: 01827c00 40020867 fadd r1, unif, r0; nop; sbwait
+00000004: 15827d80 10020827 mov r0, unif
+00000006: 01827c00 10020827 fadd r0, unif, r0
+00000008: 95827d80 114258a0 mov r2, unif; mov r0.8a, r0
+0000000a: 81827c89 11525860 fadd r1, unif, r2; mov r0.8b, r1
+0000000c: 95827d89 11625860 mov r1, unif; mov r0.8c, r1
+0000000e: 01827c40 10020867 fadd r1, unif, r1
+00000010: 809e7009 317059e0 nop; mov r0.8d, r1; thrend
+00000012: 159e7000 10020ba7 mov tlbc, r0
+00000014: 009e7000 500009e7 nop; nop; sbdone
 
-('shader code' 1c50ad40 104)
-00000000: 15827d80 10120027 packbits=0x01; addop21<cc1> ra0, io32, io32; mulop00<cc0> io39, A0, A0; op01
-00000002: 15827d80 10220027 packbits=0x02; addop21<cc1> ra0, io32, io32; mulop00<cc0> io39, A0, A0; op01
-00000004: 15827d80 10021c67 packbits=0x00; addop21<cc1> io49, io32, io32; mulop00<cc0> io39, A0, A0; op01
-00000006: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
-00000008: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
-0000000a: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
-0000000c: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
-0000000e: 95020dbf 10024c20 packbits=0x00; addop21<cc1> io48, ra0, ra0; mulop04<cc1> io32, io32, io32; op01
-00000010: 01827c00 10020c27 packbits=0x00; addop01<cc1> io48, io32, A0; mulop00<cc0> io39, A0, A0; op01
-00000012: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
-00000014: 009e7000 300009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op03
-00000016: 009e7000 100009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op01
-00000018: 009e7000 100009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op01
+('shader code' 184027a0 104)
+00000000: 15827d80 10120027 mov ra0.16a, unif
+00000002: 15827d80 10220027 mov ra0.16b, unif
+00000004: 15827d80 10021c67 mov vw_setup, unif
+00000006: 15827d80 10020c27 mov vpm, unif
+00000008: 15827d80 10020c27 mov vpm, unif
+0000000a: 15827d80 10020c27 mov vpm, unif
+0000000c: 15827d80 10020c27 mov vpm, unif
+0000000e: 95020dbf 10024c20 mov vpm, ra0; mov r0, unif
+00000010: 01827c00 10020c27 fadd vpm, unif, r0
+00000012: 15827d80 10020c27 mov vpm, unif
+00000014: 009e7000 300009e7 nop; nop; thrend
+00000016: 009e7000 100009e7 nop
+00000018: 009e7000 100009e7 nop
 
-('shader code' 1c50ae60 72)
-00000000: 15827d80 10120027 packbits=0x01; addop21<cc1> ra0, io32, io32; mulop00<cc0> io39, A0, A0; op01
-00000002: 15827d80 10220027 packbits=0x02; addop21<cc1> ra0, io32, io32; mulop00<cc0> io39, A0, A0; op01
-00000004: 15827d80 10021c67 packbits=0x00; addop21<cc1> io49, io32, io32; mulop00<cc0> io39, A0, A0; op01
-00000006: 95020dbf 10024c20 packbits=0x00; addop21<cc1> io48, ra0, ra0; mulop04<cc1> io32, io32, io32; op01
-00000008: 01827c00 10020c27 packbits=0x00; addop01<cc1> io48, io32, A0; mulop00<cc0> io39, A0, A0; op01
-0000000a: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
-0000000c: 009e7000 300009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op03
-0000000e: 009e7000 100009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op01
-00000010: 009e7000 100009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op01
+('shader code' 185092a0 72)
+00000000: 15827d80 10120027 mov ra0.16a, unif
+00000002: 15827d80 10220027 mov ra0.16b, unif
+00000004: 15827d80 10021c67 mov vw_setup, unif
+00000006: 95020dbf 10024c20 mov vpm, ra0; mov r0, unif
+00000008: 01827c00 10020c27 fadd vpm, unif, r0
+0000000a: 15827d80 10020c27 mov vpm, unif
+0000000c: 009e7000 300009e7 nop; nop; thrend
+0000000e: 009e7000 100009e7 nop
+00000010: 009e7000 100009e7 nop
 </pre>
 
 #### Manually
