@@ -169,14 +169,14 @@ Where:
    
   adda, addb encode which accumulator or ra, rb value will be supplied to the add ALU.
   mula, mulb encode which accumulator or ra, rb value will be supplied to the multiplication ALU.
-    000  A0
-    001  A1
-    010  A2
-    011  A3
-    100  A4
-    101  A5
-    110  ra
-    111  rb
+    000  r0  accumulator 0
+    001  r1  accumulator 1
+    010  r2  accumulator 2
+    011  r3  accumulator 3
+    100  r4  accumulator 4
+    101  r5  accumulator 5
+    110  ra  register from bank a
+    111  rb  regoster from bank b
   
   packbits control the packing/unpacking operation.
     Each 32 bit value can be viewed as (a:8, b:8, c:8, d:8) or (a:16, b:16)
@@ -256,10 +256,10 @@ Where:
     rb0..rb31 are registers, whilst rb32..rb63 are peripheral addresses.
 
   wa is destination for the add or mul result (depends on X).
-    for wa, except addresses 32...35 write back to accumulators a0...a3
+    ra0..ra31 are registers, whilst ra32..ra63 are peripheral addresses.
       
   wb is destination for the add or mul result (depends on X).
-    for wb, except addresses 32...35 write back to accumulators a0...a3  
+    rb0..rb31 are registers, whilst rb32..rb63 are peripheral addresses.
     
             ra         rb         wa         wb
             
@@ -295,12 +295,12 @@ Where:
     011101  ra29       rb29       ra29       rb29
     011110  ra30       rb30       ra30       rb30
     011111  ra31       rb31       ra31       rb31
-    100000  unif       unif       A0         A0         
-    100001                        A1         A1         
-    100010                        A2         A2         
-    100011  vary       vary       A3         A3         
+    100000  unif       unif       r0         r0         
+    100001                        r1         r1         
+    100010                        r2         r2         
+    100011  vary       vary       r3         r3         
     100100                        tmurs      tmurs         
-    100101                        A5quad     A5rep         
+    100101                        r5quad     r5rep         
     100110  elem_num   qpu_num    irq?       irq?
     100111  (nop)      (nop)      (nop)      (nop)
     101000                        unif_addr  unif_addr
