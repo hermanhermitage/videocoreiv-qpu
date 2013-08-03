@@ -1,0 +1,23 @@
+
+vs/null.vs:
+void main(void) {
+}
+
+
+fs/biteor.fs:
+uniform bool a;
+uniform bool b;
+void main(void) {
+  if (a ^ b)
+    gl_FragColor = vec4(1,1,1,1);
+  else 
+    gl_FragColor = vec4(0,0,0,0);
+}
+
+Failed to run shaders.
+VS:
+Compiled
+FS:
+Compiled
+Program:
+ERROR:LEX/PARSE-3 (fragment shader, line 4) Use of reserved keywords

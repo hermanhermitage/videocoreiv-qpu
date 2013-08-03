@@ -1,0 +1,62 @@
+
+vs/null.vs:
+void main(void) {
+}
+
+
+fs/manymuls.fs:
+uniform vec4 c1;
+uniform vec4 c2;
+uniform vec4 c3;
+uniform vec4 c4;
+void main(void) {
+  gl_FragColor = c1*c2*c3*c4;
+}
+
+('shader code' 18d028e0 152)
+00000000: 15827d80 10020827 mov r0, unif
+00000002: 20827030 400059e0 nop; fmul r0, unif, r0; sbwait
+00000004: 20827006 100059e0 nop; fmul r0, r0, unif
+00000006: 20827006 100059e1 nop; fmul r1, r0, unif
+00000008: 15827d80 10020827 mov r0, unif
+0000000a: 20827030 100059e0 nop; fmul r0, unif, r0
+0000000c: 20827006 100059e0 nop; fmul r0, r0, unif
+0000000e: 20827006 114059e0 nop; fmul r0.8a, r0, unif
+00000010: 95827d89 11525860 mov r1, unif; mov r0.8b, r1
+00000012: 20827031 100059e1 nop; fmul r1, unif, r1
+00000014: 2082700e 100059e1 nop; fmul r1, r1, unif
+00000016: 2082700e 116059e0 nop; fmul r0.8c, r1, unif
+00000018: 15827d80 10020867 mov r1, unif
+0000001a: 20827031 100059e1 nop; fmul r1, unif, r1
+0000001c: 2082700e 100059e1 nop; fmul r1, r1, unif
+0000001e: 2082700e 117059e0 nop; fmul r0.8d, r1, unif
+00000020: 159e7000 30020ba7 mov tlbc, r0; nop; thrend
+00000022: 009e7000 100009e7 nop
+00000024: 009e7000 500009e7 nop; nop; sbdone
+
+('shader code' 18d02a20 104)
+00000000: 15827d80 10120027 mov ra0.16a, unif
+00000002: 15827d80 10220027 mov ra0.16b, unif
+00000004: 15827d80 10021c67 mov vw_setup, unif
+00000006: 15827d80 10020c27 mov vpm, unif
+00000008: 15827d80 10020c27 mov vpm, unif
+0000000a: 15827d80 10020c27 mov vpm, unif
+0000000c: 15827d80 10020c27 mov vpm, unif
+0000000e: 95020dbf 10024c20 mov vpm, ra0; mov r0, unif
+00000010: 01827c00 10020c27 fadd vpm, unif, r0
+00000012: 15827d80 10020c27 mov vpm, unif
+00000014: 009e7000 300009e7 nop; nop; thrend
+00000016: 009e7000 100009e7 nop
+00000018: 009e7000 100009e7 nop
+
+('shader code' 18d02b40 72)
+00000000: 15827d80 10120027 mov ra0.16a, unif
+00000002: 15827d80 10220027 mov ra0.16b, unif
+00000004: 15827d80 10021c67 mov vw_setup, unif
+00000006: 95020dbf 10024c20 mov vpm, ra0; mov r0, unif
+00000008: 01827c00 10020c27 fadd vpm, unif, r0
+0000000a: 15827d80 10020c27 mov vpm, unif
+0000000c: 009e7000 300009e7 nop; nop; thrend
+0000000e: 009e7000 100009e7 nop
+00000010: 009e7000 100009e7 nop
+

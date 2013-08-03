@@ -1,0 +1,109 @@
+
+vs/null.vs:
+void main(void) {
+}
+
+
+fs/texture2.fs:
+uniform sampler2D texture[8]; 
+uniform vec2 texCoord[8];
+ 
+void main(void) {
+    gl_FragColor = texture2D(texture[0], texCoord[0])+texture2D(texture[1], texCoord[1])
+    		 + texture2D(texture[2], texCoord[2])+texture2D(texture[3], texCoord[3])
+    		 + texture2D(texture[4], texCoord[4])+texture2D(texture[5], texCoord[5])
+    		 + texture2D(texture[6], texCoord[6])+texture2D(texture[7], texCoord[7]);
+	;
+}
+('shader code' 18d02a20 512)
+00000000: 15827d80 10020927 mov tmurs, unif
+00000002: 009e7000 100009e7 nop
+00000004: 009e7000 100009e7 nop
+00000006: 15827d80 10020827 mov r0, unif
+00000008: 159e7000 10020e67 mov t0t, r0
+0000000a: 15827d80 10020827 mov r0, unif
+0000000c: 159e7000 10020e27 mov t0s, r0
+0000000e: 15827d80 10020827 mov r0, unif
+00000010: 159e7000 10020f67 mov t1t, r0
+00000012: 15827d80 10020827 mov r0, unif
+00000014: 159e7000 10020f27 mov t1s, r0
+00000016: 15827d80 10020827 mov r0, unif
+00000018: 159e7000 10020f67 mov t1t, r0
+0000001a: 15827d80 10020827 mov r0, unif
+0000001c: 159e7000 10020f27 mov t1s, r0
+0000001e: 15827d80 10020827 mov r0, unif
+00000020: 159e7000 20020e67 mov t0t, r0; nop; thrsw
+00000022: 15827d80 10020827 mov r0, unif
+00000024: 159e7000 10020e27 mov t0s, r0
+00000026: 009e7000 a00009e7 nop; nop; ldtmu0
+00000028: 95827936 b0024021 mov ra0, r4; mov r1, unif; ldtmu1
+0000002a: 839e7909 1b024839 fmin r0, r4, r4; mov t0t, r1
+0000002c: 81027c24 aa025802 fadd r0, ra0, r0; mov ra2, r4; ldtmu0
+0000002e: 81827136 1b024821 fadd r0, r0, r4; mov r1, unif
+00000030: 95827936 b00240e2 mov ra3, r4; mov r2, unif; ldtmu1
+00000032: 819e7109 1b024078 fadd ra1, r0, r4; mov t0s, r1
+00000034: 959e74a4 10025f44 mov t1t, r2; mov ra4, r4
+00000036: 830a0dbf 18025020 fmin rb0, ra2, ra2; mov r0, unif
+00000038: 830a7d80 1c02507c fmin rb1, ra2, ra2; mov t1s, r0
+0000003a: 830a0dbf 1e0250a0 fmin rb2, ra2, ra2; mov r0, unif
+0000003c: 81000dc0 1802503d fadd rb0, ra0, rb0; mov t1t, r0
+0000003e: 15827d80 10020827 mov r0, unif
+00000040: 810c0f80 1802503c fadd rb0, rb0, ra3; mov t1s, r0
+00000042: 15827d80 10020827 mov r0, unif
+00000044: 81100f80 68025039 fadd rb0, rb0, ra4; mov t0t, r0; lthrsw
+00000046: 15827d80 10020827 mov r0, unif
+00000048: 81001dc0 1c025078 fadd rb1, ra0, rb1; mov t0s, r0
+0000004a: 01002dc0 ae0210a7 fadd rb2, ra0, rb2; nop; ldtmu0
+0000004c: 01067d00 1b020827 fadd r0, ra1, r4
+0000004e: 810c1fa4 bc025041 fadd rb1, rb1, ra3; mov ra1, r4; ldtmu1
+00000050: 019e7100 1b020827 fadd r0, r0, r4
+00000052: 81040fa4 a8025845 fadd r1, rb0, ra1; mov ra5, r4; ldtmu0
+00000054: 019e7100 1b020827 fadd r0, r0, r4
+00000056: 811673a4 b8025846 fadd r1, r1, ra5; mov ra6, r4; ldtmu1
+00000058: 019e7100 4b0208a7 fadd r2, r0, r4; nop; sbwait
+0000005a: 011a7380 18020827 fadd r0, r1, ra6.8a
+0000005c: 019e7100 19020827 fadd r0, r0, r4
+0000005e: 809e7000 114059e0 nop; mov r0.8a, r0
+00000060: 809e7012 115059e0 nop; mov r0.8b, r2
+00000062: 01101f80 1c020867 fadd r1, rb1, ra4.8c
+00000064: 01067380 1c020867 fadd r1, r1, ra1.8c
+00000066: 01167380 1c020867 fadd r1, r1, ra5.8c
+00000068: 011a7380 1c020867 fadd r1, r1, ra6.8c
+0000006a: 019e7300 1d020867 fadd r1, r1, r4
+0000006c: 809e7009 116059e0 nop; mov r0.8c, r1
+0000006e: 010c2f80 1e0210a7 fadd rb2, rb2, ra3
+00000070: 009e7000 100009e7 nop
+00000072: 01102f80 1e020867 fadd r1, rb2, ra4.8d
+00000074: 01067380 1e020867 fadd r1, r1, ra1.8d
+00000076: 01167380 1e020867 fadd r1, r1, ra5.8d
+00000078: 011a7380 1e020867 fadd r1, r1, ra6.8d
+0000007a: 019e7300 3f020867 fadd r1, r1, r4; nop; thrend
+0000007c: 809e7009 117059e0 nop; mov r0.8d, r1
+0000007e: 159e7000 50020ba7 mov tlbc, r0; nop; sbdone
+
+('shader code' 18d794c0 104)
+00000000: 15827d80 10120027 mov ra0.16a, unif
+00000002: 15827d80 10220027 mov ra0.16b, unif
+00000004: 15827d80 10021c67 mov vw_setup, unif
+00000006: 15827d80 10020c27 mov vpm, unif
+00000008: 15827d80 10020c27 mov vpm, unif
+0000000a: 15827d80 10020c27 mov vpm, unif
+0000000c: 15827d80 10020c27 mov vpm, unif
+0000000e: 95020dbf 10024c20 mov vpm, ra0; mov r0, unif
+00000010: 01827c00 10020c27 fadd vpm, unif, r0
+00000012: 15827d80 10020c27 mov vpm, unif
+00000014: 009e7000 300009e7 nop; nop; thrend
+00000016: 009e7000 100009e7 nop
+00000018: 009e7000 100009e7 nop
+
+('shader code' 18d795e0 72)
+00000000: 15827d80 10120027 mov ra0.16a, unif
+00000002: 15827d80 10220027 mov ra0.16b, unif
+00000004: 15827d80 10021c67 mov vw_setup, unif
+00000006: 95020dbf 10024c20 mov vpm, ra0; mov r0, unif
+00000008: 01827c00 10020c27 fadd vpm, unif, r0
+0000000a: 15827d80 10020c27 mov vpm, unif
+0000000c: 009e7000 300009e7 nop; nop; thrend
+0000000e: 009e7000 100009e7 nop
+00000010: 009e7000 100009e7 nop
+

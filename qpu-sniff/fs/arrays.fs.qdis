@@ -1,0 +1,20 @@
+
+vs/null.vs:
+void main(void) {
+}
+
+
+fs/arrays.fs:
+uniform vec4 c1[128];
+uniform int i1;
+void main(void) {
+  gl_FragColor = c1[i1];
+}
+
+Failed to run shaders.
+VS:
+Compiled
+FS:
+Compiled
+Program:
+ERROR:CUSTOM-14 (fragment shader, line 4) Support for indexing array/vector/matrix with a non-constant is not mandated in the fragment shader

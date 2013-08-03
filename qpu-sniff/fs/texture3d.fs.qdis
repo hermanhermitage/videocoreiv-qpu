@@ -1,0 +1,20 @@
+
+vs/null.vs:
+void main(void) {
+}
+
+
+fs/texture3d.fs:
+uniform vec3 texCoord;
+uniform sampler3D texture; 
+ 
+void main(void) {
+    gl_FragColor = texture3D(texture, texCoord);
+}
+Failed to run shaders.
+VS:
+Compiled
+FS:
+Compiled
+Program:
+ERROR:LEX/PARSE-3 (fragment shader, line 2) Use of reserved keywords

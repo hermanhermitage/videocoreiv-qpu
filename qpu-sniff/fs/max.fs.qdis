@@ -1,0 +1,52 @@
+
+vs/null.vs:
+void main(void) {
+}
+
+
+fs/max.fs:
+uniform vec4 c1;
+uniform vec4 c2;
+void main(void) {
+  gl_FragColor = max(c1, c2);
+}
+
+('shader code' 18d027c0 88)
+00000000: 15827d80 10020827 mov r0, unif
+00000002: 04827c00 40020867 fmax r1, unif, r0; nop; sbwait
+00000004: 15827d80 10020827 mov r0, unif
+00000006: 04827c00 10020827 fmax r0, unif, r0
+00000008: 95827d80 114258a0 mov r2, unif; mov r0.8a, r0
+0000000a: 84827c89 11525860 fmax r1, unif, r2; mov r0.8b, r1
+0000000c: 95827d89 11625860 mov r1, unif; mov r0.8c, r1
+0000000e: 04827c40 10020867 fmax r1, unif, r1
+00000010: 809e7009 317059e0 nop; mov r0.8d, r1; thrend
+00000012: 159e7000 10020ba7 mov tlbc, r0
+00000014: 009e7000 500009e7 nop; nop; sbdone
+
+('shader code' 18d02840 104)
+00000000: 15827d80 10120027 mov ra0.16a, unif
+00000002: 15827d80 10220027 mov ra0.16b, unif
+00000004: 15827d80 10021c67 mov vw_setup, unif
+00000006: 15827d80 10020c27 mov vpm, unif
+00000008: 15827d80 10020c27 mov vpm, unif
+0000000a: 15827d80 10020c27 mov vpm, unif
+0000000c: 15827d80 10020c27 mov vpm, unif
+0000000e: 95020dbf 10024c20 mov vpm, ra0; mov r0, unif
+00000010: 01827c00 10020c27 fadd vpm, unif, r0
+00000012: 15827d80 10020c27 mov vpm, unif
+00000014: 009e7000 300009e7 nop; nop; thrend
+00000016: 009e7000 100009e7 nop
+00000018: 009e7000 100009e7 nop
+
+('shader code' 18d02960 72)
+00000000: 15827d80 10120027 mov ra0.16a, unif
+00000002: 15827d80 10220027 mov ra0.16b, unif
+00000004: 15827d80 10021c67 mov vw_setup, unif
+00000006: 95020dbf 10024c20 mov vpm, ra0; mov r0, unif
+00000008: 01827c00 10020c27 fadd vpm, unif, r0
+0000000a: 15827d80 10020c27 mov vpm, unif
+0000000c: 009e7000 300009e7 nop; nop; thrend
+0000000e: 009e7000 100009e7 nop
+00000010: 009e7000 100009e7 nop
+
