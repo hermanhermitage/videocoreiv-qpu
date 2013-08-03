@@ -207,7 +207,7 @@ void run_shaders() {
 	}
 
 	if (0) {
-		glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_ONE);
+		glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_COLOR);//GL_SRC_ALPHA);
 		glBlendEquation(GL_FUNC_ADD);
 		glBlendColor(0.5, 0.5, 0.5, 1.0);
 		glEnable(GL_BLEND);
@@ -230,6 +230,14 @@ void run_shaders() {
 		glStencilFunc(GL_LESS, 10, 0xffffffff);
 		glStencilOp(GL_INCR, GL_DECR, GL_ZERO);
 		glEnable(GL_STENCIL_TEST);
+	}
+
+	if (0) {
+		GLuint texureId;
+		glGenTextures(1, &texureId);
+		glBindTexture(GL_TEXTURE_2D, texureId);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); 
+		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, spriteData);
 	}
 
 	// Draw triangles

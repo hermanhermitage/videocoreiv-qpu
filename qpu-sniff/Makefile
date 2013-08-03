@@ -9,7 +9,7 @@ clean:
 	rm qpu-sniff
 	rm testgl
 
-qpu-sniff: qpu-sniff.c vcdbg_qpu.c testgl.o
+qpu-sniff: qpu-sniff.c vcdbg_qpu.c qpudis.c testgl.o
 
 testgl.o: testgl.c
 	$(CC) $(CPPFLAGS) $(GLINCLUDES) $(GLLDFLAGS) testgl.c -c

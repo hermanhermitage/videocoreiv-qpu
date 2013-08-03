@@ -38,6 +38,7 @@
 
 #include "vcdbg_qpu.h"
 #include "testgl.h"
+#include "qpudis.h"
 
 // Space at the end of memory we assume is holding code and fixed start.elf buffers
 #define VC_MEM_IMAGE 18706228
@@ -58,144 +59,6 @@ int is_qpu_end(volatile uint32_t *inst) {
 		&& (inst[4] == 0x009e7000) && ((inst[5] == 0x100009e7) || (inst[5] == 0x500009e7));
 }
 
-// QPU Instruction unpacking
-//
-// Add/Mul Operations:
-//   mulop:3 addop:5 ra:6 rb:6 adda:3 addb:3 mula:3 mulb:3, op:4 packbits:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
-//
-// Branches:
-//   addr:32, 1111 0000 cond:4 relative:1 register:1 ra:5 X:1 wa:6 wb:6
-//
-// 32 Bit Immediates:
-//   data:32, 1110 unknown:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
-
-//#define TEST
-#ifdef TEST
-#include "test.c"
-int qpu_dis_init() {}
-#else
-char *acc_names[8];
-char *banka_names[64]; 
-char *bankb_names[64]; 
-char *banka_w[64];
-char *bankb_w[64];
-char *ops[16];
-char *addops[32];
-char *mulops[8];
-char *cc[8];
-
-void qpu_dis_init() {
-	for (int i=0; i<64; i++) {
-		if (i<8)
-			sprintf(acc_names[i] = malloc(4), "A%d", i);
-		sprintf(banka_names[i] = malloc(5), "%s%d", i<32?"ra":"io", i);
-		sprintf(bankb_names[i] = malloc(5), "%s%d", i<32?"rb":"io", i);
-		sprintf(banka_w[i] = malloc(5), "%s%d", i<32?"ra":"io", i);
-		sprintf(bankb_w[i] = malloc(5), "%s%d", i<32?"rb":"io", i);
-		if (i<16)
-			sprintf(ops[i] = malloc(5), "op%02d", i);
-		if (i<32)
-			sprintf(addops[i] = malloc(8), "addop%02d", i);
-		if (i<8)
-			sprintf(mulops[i] = malloc(8), "mulop%02d", i);
-		if (i<8)
-			sprintf(cc[i] = malloc(6), "<cc%d>", i);
-	}
-}
-#endif
-
-const char *qpu_r(uint32_t ra, uint32_t rb, uint32_t adda) {
-	if (adda==6) return banka_names[ra];
-	if (adda==7) return bankb_names[rb];
-	return acc_names[adda];
-}
-
-const char *qpu_w_add(uint32_t wa, uint32_t wb, uint32_t X) {
-	return X ? bankb_w[wa] : banka_w[wa];
-}
-
-const char *qpu_w_mul(uint32_t wa, uint32_t wb, uint32_t X) {
-	return X ? banka_w[wb] : bankb_w[wb];
-}
-void show_qpu_add_mul(uint32_t i0, uint32_t i1)
-
-{
-	uint32_t mulop = (i0 >> 29) & 0x7;
-	uint32_t addop = (i0 >> 24) & 0x1f;
-	uint32_t ra    = (i0 >> 18) & 0x3f;
-	uint32_t rb    = (i0 >> 12) & 0x3f;
-	uint32_t adda  = (i0 >>  9) & 0x07;
-	uint32_t addb  = (i0 >>  6) & 0x07;
-	uint32_t mula  = (i0 >>  3) & 0x07;
-	uint32_t mulb  = (i0 >>  0) & 0x07;
-	uint32_t op    = (i1 >> 28) & 0x0f;
-	uint32_t packbits = (i1 >> 20) & 0xff;
-	uint32_t addcc = (i1 >> 17) & 0x07;
-	uint32_t mulcc = (i1 >> 14) & 0x07;
-	uint32_t F     = (i1 >> 13) & 0x01;
-	uint32_t X     = (i1 >> 12) & 0x01;
-	uint32_t wa    = (i1 >> 6) & 0x3f;
-	uint32_t wb    = (i1 >> 0) & 0x3f;
-	/*
-	 * printf("ra=%02d, rb=%02d, adda=%x, addb=%x, mula=%x, mulb=%x, wa=%02d, wb=%02d, F=%x, X=%x, packbits=0x%02x; %s%s %s, %s, %s; %s%s %s, %s, %s; %s\n",
-			ra, rb, adda, addb, mula, mulb, wa, wb, F, X, packbits,
-			addops[addop], cc[addcc], qpu_w_add(wa, wb, X), qpu_r(ra, rb, adda), qpu_r(ra, rb, addb),
-			mulops[mulop], cc[mulcc], qpu_w_mul(wa, wb, X), qpu_r(ra, rb, mula), qpu_r(ra, rb, mulb),
-			ops[op]);
-			*/
-	printf("packbits=0x%02x; %s%s %s, %s, %s; %s%s %s, %s, %s; %s\n",
-			packbits,
-			addops[addop], cc[addcc], qpu_w_add(wa, wb, X), qpu_r(ra, rb, adda), qpu_r(ra, rb, addb),
-			mulops[mulop], cc[mulcc], qpu_w_mul(wa, wb, X), qpu_r(ra, rb, mula), qpu_r(ra, rb, mulb),
-			ops[op]);
-}
-
-void show_qpu_branch(uint32_t i0, uint32_t i1)
-{
-	uint32_t addr     = i0;
-	uint32_t unknown  = (i1 >> 24) & 0x0f;
-	uint32_t cond     = (i1 >> 20) & 0x0f;
-	uint32_t pcrel    = (i1 >> 19) & 0x01;
-	uint32_t addreg   = (i1 >> 18) & 0x01;
-	uint32_t ra       = (i1 >> 13) & 0x1f;
-	uint32_t X        = (i1 >> 12) & 0x01;
-	uint32_t wa       = (i1 >>  6) & 0x3f;
-	uint32_t wb       = (i1 >>  0) & 0x3f;
-	printf("addr=0x%08x, unknown=%x, cond=%02d, pcrel=%x, addreg=%x, ra=%02d, X=%x, wa=%02d, wb=%02x\n",
-			addr, unknown, cond, pcrel, addreg, ra, X, wa, wb);
-}
-
-void show_qpu_imm32(uint32_t i0, uint32_t i1)
-{
-	uint32_t data = i0;
-	uint32_t unknown = (i1 >> 20) & 0xff;
-	uint32_t addcc   = (i1 >> 17) & 0x07;
-	uint32_t mulcc   = (i1 >> 14) & 0x07;
-	uint32_t F       = (i1 >> 13) & 0x01;
-	uint32_t X       = (i1 >> 12) & 0x01;
-	uint32_t wa      = (i1 >>  6) & 0x3f;
-	uint32_t wb      = (i1 >>  0) & 0x3f;
-	printf("data=0x%08x, unknown=0x%02x, addcc=%x, mulcc=%x, F=%x, X=%x, wa=%02d, wb=%02d\n",
-			data, unknown, addcc, mulcc, F, X, wa, wb);
-}
-
-void show_qpu_inst(uint32_t *inst) {
-	uint32_t i0 = inst[0];
-	uint32_t i1 = inst[1];
-
-	int op = (i1 >> 24) & 0xf;
-	if (op<14) show_qpu_add_mul(i0, i1);
-	if (op==14) show_qpu_branch(i0, i1);
-	if (op==15) show_qpu_imm32(i0, i1);
-}
-
-void show_qpu_fragment(uint32_t *inst, int length) {
-	uint32_t i = 0;
-	for(;i<length; i+=2) {
-		printf("%08x: %08x %08x ", i, inst[i], inst[i+1]); show_qpu_inst(&inst[i]);
-	}
-	printf("\n");
-}
 
 uint32_t *file_load(const char *filename, uint32_t *filesize) {
 	uint32_t *memory = 0;
@@ -222,7 +85,6 @@ void file_unload(uint32_t *data) {
 }
 
 void qpu_dis_file(const char *filename) {
-	qpu_dis_init();
 	printf("Disassembling %s\n", filename);
 	uint32_t size;
 	uint32_t *fragment = file_load(filename, &size);
@@ -310,7 +172,6 @@ void show_fragment(char *type, unsigned int original_address, unsigned int *data
 }
 
 void vcdbgqpuscan(char *argv[]) {
-	qpu_dis_init();
 	vcdbg_scan_relocs(0, show_fragment);
 }
 
@@ -330,7 +191,6 @@ void testgl(char *vs_filename, char *fs_filename) {
 			if (program_log) printf("Program:\n%s\n", program_log);
 		}
 		else {
-			qpu_dis_init();
 			char *relocs[] = {"'shader code'", 0};
 			vcdbg_scan_relocs(relocs, show_fragment);
 		}
