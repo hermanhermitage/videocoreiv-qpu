@@ -52,7 +52,411 @@ In recommended reading order:
 * [Spec: GL ES 2.0](http://www.opengl.org/documentation/specs/version2.0/glspec20.pdf)
 * [OpenGL ES 2_X](http://www.khronos.org/opengles/2_X/)
 
+### QPU Instruction Set
+* Fixed length instruction word of 64 bits.
+* Instructions contain multiple issue slots.
+* There is a slot for the **Add vector ALU** and **Multiply vector ALU**.
+* Registers written in one cycle, should not be read back for 1 instruction cycle.
+* Branch instructions have 3 delay slots.
+* Thread switching is handled by (cooperative) thread switch instructions.
+* Program may be terminated by instruction with program end signal, two delay slots will be executed before the unit becomes idle.
+
+### Instruction and Register Pipeline
+![3d Pipeline](https://raw.github.com/wiki/hermanhermitage/videocoreiv/images/US20110148901/FIG4.png)
+
+- Decoupled memory access operations are: reciprocal, reciprocal square root, logarithm and exponential (US20110227920-0078).
+- Accumulators written in one cycle are available immediately in the next instruction (US20110227920-0092).
+- Accumulators are a0...a4 or r0...r5 (here) (US20110227920-0094).
+- The two register files have 32 registers each (US20110227920-0095), whilst the other 32 register addresses refer to peripheral IO.
+- The rotator allows a vector to be rotated by any one of 16 horizontal rotations (US20110227920-0096).
+- The unpackers can unpack register data, whilst the packers pack it (US20110227920-0097).
+- Support for zero-extension of 8-bit data, sign extension of 16-bit data, convert 16-bit floats to 32-bit floats. (US20110227920-0099).
+- Values written to registers (not accumulators) are not available in the next cycle (US20110227920-0103).
+- Condition field allows conditional write back of ALU results (US20110227920-0104), and updating of condition flags is optional.
+- 32-bit bit data may be written back to registers/accumulators as an alternative to ALU results (US20110227920-0105).
+- Branches have 3-delay slots (no prediction), and may be conditional based on ALU flag bits.  Branches may provide link functionality.  (US20110227920-0106).
+- Instructions may include a signalling field (US20110227920-0107) without costing an additional instruction.  Typical uses include tile buffer access, or end of program / thread switch (both with 2 delay slots).
+
+### Instruction Encodings
+I'm realigning the names with those found in some of the blobs.  For instance thread-switch becomes thrsw, gl_FragColor
+becomes tlbc, min8 becomes v8min and so forth.  The main purpose of this change is in the vain hope that if any of
+the work here becomes useful the names are common for anyone doing this in a commercial context.
+
+#### Add/Mul Operations:
+<pre>
+  &lt;addop&gt;&lt;addcc&gt; wa, radda, raddb [setf] ; &lt;mulop&gt;&lt;mulcc&gt; wb, rmula, rmulb [setf] ; &lt;op&gt;
+  &lt;addop&gt;&lt;addcc&gt; wb, radda, raddb [setf] ; &lt;mulop&gt;&lt;mulcc&gt; wa, rmula, rmulb [setf] ; &lt;op&gt;
+  
+  radda = ra | ra >> shift | imm6 | rb | r0..r5
+  raddb = rb | ra >> shift | imm6 | rb | r0..r5
+  rmula = ra | ra >> shift | imm6 | rb | r0..r5
+  rmulb = rb | ra >> shift | imm6 | rb | r0..r5
+</pre>
+
+Encoding:
+<pre>
+  mulop:3 addop:5 ra:6 rb:6 adda:3 addb:3 mula:3 mulb:3, op:4 packbits:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
+  mulop:3 addop:5 ra:6 imm:6 adda:3 addb:3 mula:3 mulb:3, 1101 packbits:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
+</pre>
+
+Where:
+<pre>
+  addop is the add ALU operation.
+    00000  nop
+    00001  fadd     rd = ra + rb         (floating point addition)
+    00010  fsub     rd = ra - rb         (floating point subtraction)
+    00011  fmin     rd = fmin(ra, rb)    (floating point minimum)
+    00100  fmax     rd = fmax(ra, rb)    (floating point maximum)
+    00101  fminabs  rd = fminabs(ra, rb)
+    00110  fmaxabs  rd = fmaxabs(ra, rb)
+    00111  ftoi     rd = int(rb)         (convert float to int)
+    01000  itof     rd = float(rb)       (convert int to float)
+    01001
+    01010
+    01011
+    01100  add      rd = ra + rb         (integer addition)
+    01101  sub      rd = ra - rb         (integer subtraction)
+    01110  shr      rd = ra &gt;&gt;&gt; rb       (logical shift right)
+    01111  asr      rd = ra &gt;&gt; rb        (arithmetic shift right)
+    10000  ror      rd = ror(ra, rb)     (rotate right)
+    10001  shl      rd = ra &lt;&lt; rb        (logical shift left)
+    10010  min      rd = min(ra, rb)     (integer min)
+    10011  max      rd = max(ra, rb)     (integer max)
+    10100  and      rd = ra & rb         (bitwise and)
+    10101  or       rd = ra | rb         (bitwise or)
+    10110  xor      rd = ra ^ rb         (bitwise xor)
+    10111  not      rd = ~rb             (bitwise not)
+    11000  clz      rd = clz(rb)         (count leading zeros)
+    11001
+    11010
+    11011
+    11100
+    11101
+    11110  v8adds   rd[i] = sat8(ra[i]+rb[i]), i = 0..3 / a..d
+    11111  v8subs   rd[i] = sat8(ra[i]-rb[i]), i = 0..3 / a..d
+    
+  mulop is the multiplication ALU operation.
+      000  nop
+      001  fmul    rd = ra * rb
+      010  mul24
+      011  v8muld  rd[i] = ra[i] * rb[3], i = 0..3 / a..d
+      100  v8min   rd[i] = min(ra[i], rb[i]), i = 0..3 / a..d
+      101  v8max   rd[i] = max(ra[i], rb[i]), i = 0..3 / a..d
+      110  v8adds  rd[i] = sat8(ra[i] + rb[i]), i = 0..3 / a..d
+      111  v8subs  rd[i] = sat8(ra[i] - rb[i]), i = 0..3 / a..d
+      
+  op is the signaling or control flow operation.
+     0000  bpkt
+     0001  nop
+     0010  thrsw   thread switch
+     0011  thrend  thread end
+     0100  sbwait  scoreboard wait
+     0101  sbdone  scoreboard done
+     0110  lthrsw  last thread switch
+     0111  loadcv
+     1000  loadc   load tlb color
+     1001  ldcend  load tlb color and thread end
+     1010  ldtmu0  load tmu0
+     1011  ldtmu1  load tmu1
+     1100  loadam  
+     1101  nop     (small constant encoded in field rb)
+     1110  ldi     load immediate
+     1111  bra     branch
+     
+  (Replacing the following names, thread-switch, thread-end, scoreboard-wait, scoreboard-done, last-thread-switch, 
+   (openvg coverage?), load-gl_FragColor, load-gl_FragColor-and-thread-end, load-tmu0, load-tmu1,
+   (openvg alpha mask?))
+   
+  adda, addb encode which accumulator or ra, rb value will be supplied to the add ALU.
+  mula, mulb encode which accumulator or ra, rb value will be supplied to the multiplication ALU.
+    000  A0
+    001  A1
+    010  A2
+    011  A3
+    100  A4
+    101  A5
+    110  ra
+    111  rb
+  
+  packbits control the packing/unpacking operation.
+    Each 32 bit value can be viewed as (a:8, b:8, c:8, d:8) or (a:16, b:16)
+    uuu0pppp if X==0 packbits apply to addop destination and second source.
+             if X==1 packbits apply to mulop destination and second source.
+    uuu1pppp packbits apply to mulop destination and second source.
+  (Only registers and not accumulators can be unpacked, but either can be packed.
+   In shaders its not uncommon to see round tripping thru registers).
+   
+  uuu unpacking add/mul source (rb)
+    000  (32) full 32 bit value
+    001  16a  unpack from 16a
+    010  16b  unpack from 16b
+    011  8dr  unpack as 8d replicated, ie (d:8, d:8, d:8, d:8)
+    100  8a   unpack from 8a
+    101  8b   unpack from 8b
+    110  8c   unpack from 8c
+    111  8d   unpack from 8d
+    
+  0pppp pack add result
+    0000  (32)
+    0001  16a
+    0010  16b
+    0011  8abcd
+    0100  8a
+    0101  8b
+    0110  8c
+    0111  8d
+    1000  s
+    1001  16as
+    1010  16bs
+    1011  8abcds
+    1100  8as
+    1101  8bs
+    1110  8cs
+    1111  8ds
+            
+  1pppp pack mul result
+    0000  (32)
+    0001
+    0010
+    0011  8abcd
+    0100  8a
+    0101  8b
+    0110  8c
+    0111  8d
+    1000
+    1001
+    1010
+    1011
+    1100
+    1101
+    1110
+    1111 
+            
+  addcc holds the cc predicate for conditional execution of the add instruction.
+  mulcc holds the cc predicate for conditional execution of the mul instruction.
+    000  .never  never
+    001          always
+    010  .zs     zero set
+    011  .zc     zero clear
+    100  .ns     negative set
+    101  .nc     negative clear
+    110  .cs     carry set
+    111  .cc     carry clear
+    
+  F is set to update cc flags (there are Zero, Negative and Carry flags per unit) - SETF
+    Normally the result of the add operation is used to determine the new cc flags.
+    If the add operation is a nop, then the result of the multiply operation is used.
+    
+  X is set to exchange values on the writeback (ie the crossed lines in the diagram).
+
+  ra is register bank A value to read.
+    ra0..ra31 are registers, whilst ra32..ra63 are peripheral addresses.
+    
+  rb is register bank Bvalue to read.
+    rb0..rb31 are registers, whilst rb32..rb63 are peripheral addresses.
+
+  wa is destination for the add or mul result (depends on X).
+    for wa, except addresses 32...35 write back to accumulators a0...a3
+      
+  wb is destination for the add or mul result (depends on X).
+    for wb, except addresses 32...35 write back to accumulators a0...a3  
+    
+            ra         rb         wa         wb
+            
+    000000  ra00       rb00       ra00       rb00
+    000001  ra01       rb01       ra01       rb01
+    000010  ra02       rb02       ra02       rb02
+    000011  ra03       rb03       ra03       rb03
+    000100  ra04       rb04       ra04       rb04
+    000101  ra05       rb05       ra05       rb05
+    000110  ra06       rb06       ra06       rb06
+    000111  ra07       rb07       ra07       rb07
+    001000  ra08       rb08       ra08       rb08
+    001001  ra09       rb09       ra09       rb09
+    001010  ra10       rb10       ra10       rb10
+    001011  ra11       rb11       ra11       rb11
+    001100  ra12       rb12       ra12       rb12
+    001101  ra13       rb13       ra13       rb13
+    001110  ra14       rb14       ra14       rb14
+    001111  w          z          w          w?
+    001000  ra16       rb16       ra16       rb16
+    001001  ra17       rb17       ra17       rb17
+    001010  ra18       rb18       ra18       rb18
+    001011  ra19       rb19       ra19       rb19
+    001100  ra20       rb20       ra20       rb20
+    001101  ra21       rb21       ra21       rb21
+    001110  ra22       rb22       ra22       rb22
+    001111  ra23       rb23       ra23       rb23
+    011000  ra24       rb24       ra24       rb24
+    011001  ra25       rb25       ra25       rb25
+    011010  ra26       rb26       ra26       rb26
+    011011  ra27       rb27       ra27       rb27
+    011100  ra28       rb28       ra28       rb28
+    011101  ra29       rb29       ra29       rb29
+    011110  ra30       rb30       ra30       rb30
+    011111  ra31       rb31       ra31       rb31
+    100000  unif       unif       A0         A0         
+    100001                        A1         A1         
+    100010                        A2         A2         
+    100011  vary       vary       A3         A3         
+    100100                        tmurs      tmurs         
+    100101                        A5quad     A5rep         
+    100110  elem_num   qpu_num    irq?       irq?
+    100111  (nop)      (nop)      (nop)      (nop)
+    101000                        unif_addr  unif_addr
+    101000  x_coord    y_coord    x_coord    y_coord
+    101000  ms_mask    rev_flag   ms_mask    rev_flag
+    101000                        stencil    stencil
+    101000                        tlbz       tlbz       
+    101000                        tlbm       tlbm       
+    101000                        tlbc       tlbc       
+    101000                        tlbam?     tlbam?     
+    101000  vpm        vpm        vpm        vpm        
+    101000  vr_busy    vw_busy    vr_setup   vw_setup   
+    101000  vr_wait    vw_wait    vr_addr    vw_addr
+    101000  mutex      mutex      mutex      mutex
+    101000                        recip      recip
+    101000                        recipsqrt  recipsqrt
+    101000                        exp        exp
+    101000                        log        log
+    101000                        t0s        t0s
+    101000                        t0t        t0t
+    101000                        t0r        t0r
+    101000                        t0b        t0b
+    101000                        t1s        t1s
+    101000                        t1t        t1t
+    101000                        t1r        t1r
+    101000                        t1b        t1b  
+      
+  rb - Small constants, active when signal/control operation is 1101:
+  
+    imm      ra       rb
+ 
+    0  i:5   ra        i            Signed 4 bit immediate
+    10 i:4   ra        1.0 &lt;&lt; i     Shift by signed 4 bit quantity   
+    11 0000  ra &gt;&gt; A5  -
+    11 d:4   ra &gt;&gt; d   -                
+    
+</pre>
+
+#### Branches:
+<pre>
+  # Branch absolute to addr+ra, optionally save return address to wa and/or wb.
+  bra[&lt;cond&gt;] [wa|wb], addr[+ra]
+  
+  # Branch relative to pc+addr+ra, optionally save return address to wa and/or wb.
+  brr[&lt;cond&gt;] [wa|wb], addr[+ra]
+</pre>
+Encoding:
+<pre>
+  addr:32, 1111 0000 cond:4 relative:1 register:1 ra:5 X:1 wa:6 wb:6
+</pre>
+Where:
+<pre>
+  addr is the target address
+
+  cond is the condition code:
+    0000  .allz   all zero set
+    0001  .allnz  all zero clear
+    0010  .anyz   any zero set
+    0011  .anynz  any zero clear
+    0100  .alln   all negative set
+    0101  .allnn  all negative clear
+    0110  .anyn   any negative set
+    0111  .anynn  any negative clear
+    1000  .allc   all carry set
+    1001  .allnc  all carry clear
+    1010  .allcs  any carry set
+    1011  .allcc  any carry clear
+    xxxx unknown
+
+  relative is set if the target is relative.
+  register is set if the target should be addr + ra
+
+  X, wa, wb are used to write the return address to a register
+    (ie. branch and link).
+</pre>
+
+
+#### Move Immediate:
+<pre>
+  movi[&lt;addcc&gt;] wa, data [setf] ; movi[&lt;mulcc&gt;] wb, data [setf]
+  movi[&lt;addcc&gt;] wb, data [setf] ; movi[&lt;mulcc&gt;] wa, data [setf]  
+</pre>
+Encoding:
+<pre>
+  data:32, 1110 unknown:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
+</pre>
+Where:
+<pre>
+  data is constant to be loaded.
+  addcc, mulcc, F, X, wa and wb as above.
+</pre>
+
 ### Catching QPU Instruction Fragments
+
+#### Automatically
+Use qpu-sniff from the qpu-sniff directory.
+Example:
+- First fragment is the fragment shader.
+- Second fragment is the full vertex shader.
+- Third fragment is the coordinate shader (vertex shader only concerned with Vertex positions - used for tiling).
+
+<pre>
+vs/null.vs:
+void main(void) {
+}
+
+
+fs/add.fs:
+uniform vec4 c1;
+uniform vec4 c2;
+void main(void) {
+  gl_FragColor = c1+c2;
+}
+
+('shader code' 1c50acc0 88)
+00000000: 15827d80 10020827 packbits=0x00; addop21<cc1> io32, io32, io32; mulop00<cc0> io39, A0, A0; op01
+00000002: 01827c00 40020867 packbits=0x00; addop01<cc1> io33, io32, A0; mulop00<cc0> io39, A0, A0; op04
+00000004: 15827d80 10020827 packbits=0x00; addop21<cc1> io32, io32, io32; mulop00<cc0> io39, A0, A0; op01
+00000006: 01827c00 10020827 packbits=0x00; addop01<cc1> io32, io32, A0; mulop00<cc0> io39, A0, A0; op01
+00000008: 95827d80 114258a0 packbits=0x14; addop21<cc1> io34, io32, io32; mulop04<cc1> io32, A0, A0; op01
+0000000a: 81827c89 11525860 packbits=0x15; addop01<cc1> io33, io32, A2; mulop04<cc1> io32, A1, A1; op01
+0000000c: 95827d89 11625860 packbits=0x16; addop21<cc1> io33, io32, io32; mulop04<cc1> io32, A1, A1; op01
+0000000e: 01827c40 10020867 packbits=0x00; addop01<cc1> io33, io32, A1; mulop00<cc0> io39, A0, A0; op01
+00000010: 809e7009 317059e0 packbits=0x17; addop00<cc0> io39, A0, A0; mulop04<cc1> io32, A1, A1; op03
+00000012: 159e7000 10020ba7 packbits=0x00; addop21<cc1> io46, A0, A0; mulop00<cc0> io39, A0, A0; op01
+00000014: 009e7000 500009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op05
+
+('shader code' 1c50ad40 104)
+00000000: 15827d80 10120027 packbits=0x01; addop21<cc1> ra0, io32, io32; mulop00<cc0> io39, A0, A0; op01
+00000002: 15827d80 10220027 packbits=0x02; addop21<cc1> ra0, io32, io32; mulop00<cc0> io39, A0, A0; op01
+00000004: 15827d80 10021c67 packbits=0x00; addop21<cc1> io49, io32, io32; mulop00<cc0> io39, A0, A0; op01
+00000006: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
+00000008: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
+0000000a: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
+0000000c: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
+0000000e: 95020dbf 10024c20 packbits=0x00; addop21<cc1> io48, ra0, ra0; mulop04<cc1> io32, io32, io32; op01
+00000010: 01827c00 10020c27 packbits=0x00; addop01<cc1> io48, io32, A0; mulop00<cc0> io39, A0, A0; op01
+00000012: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
+00000014: 009e7000 300009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op03
+00000016: 009e7000 100009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op01
+00000018: 009e7000 100009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op01
+
+('shader code' 1c50ae60 72)
+00000000: 15827d80 10120027 packbits=0x01; addop21<cc1> ra0, io32, io32; mulop00<cc0> io39, A0, A0; op01
+00000002: 15827d80 10220027 packbits=0x02; addop21<cc1> ra0, io32, io32; mulop00<cc0> io39, A0, A0; op01
+00000004: 15827d80 10021c67 packbits=0x00; addop21<cc1> io49, io32, io32; mulop00<cc0> io39, A0, A0; op01
+00000006: 95020dbf 10024c20 packbits=0x00; addop21<cc1> io48, ra0, ra0; mulop04<cc1> io32, io32, io32; op01
+00000008: 01827c00 10020c27 packbits=0x00; addop01<cc1> io48, io32, A0; mulop00<cc0> io39, A0, A0; op01
+0000000a: 15827d80 10020c27 packbits=0x00; addop21<cc1> io48, io32, io32; mulop00<cc0> io39, A0, A0; op01
+0000000c: 009e7000 300009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op03
+0000000e: 009e7000 100009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op01
+00000010: 009e7000 100009e7 packbits=0x00; addop00<cc0> io39, A0, A0; mulop00<cc0> io39, A0, A0; op01
+</pre>
+
+#### Manually
+
 Under Raspbian /opt/vc/bin/ and /opt/vc/bin/vcdbg and /opt/vc/bin/vcgencmd may be used to poke about on
 the videocore side.  See https://github.com/nezticle/RaspberryPi-BuildRoot/wiki/VideoCore-Tools for more information.
 
@@ -94,135 +498,3 @@ The fragments can then be saved via:
 </pre>
 [View an analysis of some sample fragments](Traces1.md)
 
-### QPU Instruction Set
-* Fixed length instruction word of 64 bits.
-* Instructions contain multiple issue slots.
-* There is a slot for the **Add vector ALU** and **Multiply vector ALU**.
-* Registers written in one cycle, should not be read back for 1 instruction cycle.
-* Branch instructions have 3 delay slots.
-* Thread switching is handled by (cooperative) thread switch instructions.
-* Program may be terminated by instruction with program end signal, two delay slots will be executed before the unit becomes idle.
-
-### Instruction and Register Pipeline
-![3d Pipeline](https://raw.github.com/wiki/hermanhermitage/videocoreiv/images/US20110148901/FIG4.png)
-
-- Decoupled memory access operations are: reciprocal, reciprocal square root, logarithm and exponential (US20110227920-0078).
-- Accumulators written in one cycle are available immediately in the next instruction (US20110227920-0092).
-- Accumulators are a0...a4 or r0...r5 (here) (US20110227920-0094).
-- The two register files have 32 registers each (US20110227920-0095), whilst the other 32 register addresses refer to peripheral IO.
-- The rotator allows a vector to be rotated by any one of 16 horizontal rotations (US20110227920-0096).
-- The unpackers can unpack register data, whilst the packers pack it (US20110227920-0097).
-- Support for zero-extension of 8-bit data, sign extension of 16-bit data, convert 16-bit floats to 32-bit floats. (US20110227920-0099).
-- Values written to registers (not accumulators) are not available in the next cycle (US20110227920-0103).
-- Condition field allows conditional write back of ALU results (US20110227920-0104), and updating of condition flags is optional.
-- 32-bit bit data may be written back to registers/accumulators as an alternative to ALU results (US20110227920-0105).
-- Branches have 3-delay slots (no prediction), and may be conditional based on ALU flag bits.  Branches may provide link functionality.  (US20110227920-0106).
-- Instructions may include a signalling field (US20110227920-0107) without costing an additional instruction.  Typical uses include tile buffer access, or end of program / thread switch (both with 2 delay slots).
-
-### Instruction Encodings
-
-#### Add/Mul Operations:
-<pre>
-  &lt;addop&gt;&lt;addcc&gt; wa, radda, raddb [setf] ; &lt;mulop&gt;&lt;mulcc&gt; wb, rmula, rmulb [setf] ; &lt;op&gt;
-  &lt;addop&gt;&lt;addcc&gt; wb, radda, raddb [setf] ; &lt;mulop&gt;&lt;mulcc&gt; wa, rmula, rmulb [setf] ; &lt;op&gt;
-  
-  radda = ra | ra >> shift | imm6 | rb | r0..r5
-  raddb = rb | ra >> shift | imm6 | rb | r0..r5
-  rmula = ra | ra >> shift | imm6 | rb | r0..r5
-  rmulb = rb | ra >> shift | imm6 | rb | r0..r5
-</pre>
-
-Encoding:
-<pre>
-  mulop:3 addop:5 ra:6 rb:6 adda:3 addb:3 mula:3 mulb:3, op:4 packbits:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
-</pre>
-
-Where:
-<pre>
-  op is the signaling or control flow operation.
-
-  mulop is the multiplication ALU operation.
-  addop is the add ALU operation.
-  
-  adda, addb encode which accumulator or ra, rb value will be supplied to the add ALU.
-  mula, mulb encode which accumulator or ra, rb value will be supplied to the multiplication ALU.
-  
-  packbits control the packing/unpacking operation.
-  
-  addcc holds the cc predicate for conditional execution of the add instruction.
-  mulcc holds the cc predicate for conditional execution of the mul instruction.
-    000 never
-    001 always
-    010 zero set
-    011 zero clear
-    100 negative set
-    101 negative clear
-    110 carry set
-    111 carry clear
-    
-  F is set to update cc flags (there are Zero, Negative and Carry flags per unit) - SETF
-  X is set to exchange values on the writeback (ie the crossed lines in the diagram).
-
-  ra is register bank A value to read.
-  rb is register bank V value to read.
-  wa is destination for the add or mul result (depends on X).
-  wb is destination for the add or mul result (depends on X).
-    ra0..ra31 are registers, whilst ra32..ra63 are peripheral addresses.
-    rb0..rb31 are registers, whilst rb32..rb63 are peripheral addresses.
-    for wa, except addresses 32...35 write back to accumulators a0...a3
-    for wb, except addresses 32...35 write back to accumulators a0...a3
-</pre>
-
-#### Branches:
-<pre>
-  # Branch absolute to addr+ra, optionally save return address to wa and/or wb.
-  bra[&lt;cond&gt;] [wa|wb], addr[+ra]
-  
-  # Branch relative to pc+addr+ra, optionally save return address to wa and/or wb.
-  brr[&lt;cond&gt;] [wa|wb], addr[+ra]
-</pre>
-Encoding:
-<pre>
-  addr:32, 1111 0000 cond:4 relative:1 register:1 ra:5 X:1 wa:6 wb:6
-</pre>
-Where:
-<pre>
-  addr is the target address
-
-  cond is the condition code:
-    0000 all zero set
-    0001 all zero clear
-    0010 any zero set
-    0011 any zero clear
-    0100 all negative set
-    0101 all negative clear
-    0110 any negative set
-    0111 any negative clear
-    1000 all carry set
-    1001 all carry clear
-    1010 any carry set
-    1011 any carry clear
-    xxxx unknown
-
-  relative is set if the target is relative.
-  register is set if the target should be addr + ra
-
-  X, wa, wb are used to write the return address to a register
-    (ie. branch and link).
-</pre>
-
-
-#### Move Immediate:
-<pre>
-  movi[&lt;addcc&gt;] wa, data [setf] ; movi[&lt;mulcc&gt;] wb, data [setf]
-  movi[&lt;addcc&gt;] wb, data [setf] ; movi[&lt;mulcc&gt;] wa, data [setf]  
-</pre>
-Encoding:
-<pre>
-  data:32, 1110 unknown:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
-</pre>
-Where:
-<pre>
-  data is constant to be loaded.
-  addcc, mulcc, F, X, wa and wb as above.
-</pre>
