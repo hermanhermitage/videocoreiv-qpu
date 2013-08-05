@@ -366,8 +366,8 @@ Where:
     0111  .anynn  any negative clear
     1000  .allc   all carry set
     1001  .allnc  all carry clear
-    1010  .allcs  any carry set
-    1011  .allcc  any carry clear
+    1010  .anycs  any carry set
+    1011  .anycc  any carry clear
     xxxx unknown
 
   relative is set if the target is relative.
