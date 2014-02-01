@@ -241,7 +241,7 @@ void show_qpu_branch(uint32_t i0, uint32_t i1)
 	uint32_t X        = (i1 >> 12) & 0x01;
 	uint32_t wa       = (i1 >>  6) & 0x3f;
 	uint32_t wb       = (i1 >>  0) & 0x3f;
-	printf("addr=0x%08x, unknown=%x, cond=%02d, pcrel=%x, addreg=%x, ra=%02d, X=%x, wa=%02d, wb=%02x\n",
+	printf("branch addr=0x%08x, unknown=%x, cond=%02d, pcrel=%x, addreg=%x, ra=%02d, X=%x, wa=%02d, wb=%02x\n",
 			addr, unknown, cond, pcrel, addreg, ra, X, wa, wb);
 }
 
@@ -255,7 +255,7 @@ void show_qpu_imm32(uint32_t i0, uint32_t i1)
 	uint32_t X       = (i1 >> 12) & 0x01;
 	uint32_t wa      = (i1 >>  6) & 0x3f;
 	uint32_t wb      = (i1 >>  0) & 0x3f;
-	printf("data=0x%08x, unknown=0x%02x, addcc=%x, mulcc=%x, F=%x, X=%x, wa=%02d, wb=%02d\n",
+	printf("imm32 data=0x%08x, unknown=0x%02x, addcc=%x, mulcc=%x, F=%x, X=%x, wa=%02d, wb=%02d\n",
 			data, unknown, addcc, mulcc, F, X, wa, wb);
 }
 
@@ -265,8 +265,8 @@ void show_qpu_inst(uint32_t *inst) {
 
 	int op = (i1 >> 28) & 0xf;
 	if (op<14) show_qpu_add_mul(i0, i1);
-	if (op==14) show_qpu_branch(i0, i1);
-	if (op==15) show_qpu_imm32(i0, i1);
+	if (op==14) show_qpu_imm32(i0, i1);
+	if (op==15) show_qpu_branch(i0, i1);
 }
 
 void show_qpu_fragment(uint32_t *inst, int length) {
