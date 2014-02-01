@@ -123,7 +123,7 @@ Where:
     10010  min      rd = min(ra, rb)     (integer min)
     10011  max      rd = max(ra, rb)     (integer max)
     10100  and      rd = ra & rb         (bitwise and)
-    10101  or       rd = ra | rb         (bitwise or)
+    10101  or       rd = ra | rb         (bitwise or,  note: or rd, ra, ra is used for mov)
     10110  xor      rd = ra ^ rb         (bitwise xor)
     10111  not      rd = ~rb             (bitwise not)
     11000  clz      rd = clz(rb)         (count leading zeros)
@@ -140,7 +140,7 @@ Where:
       001  fmul    rd = ra * rb
       010  mul24
       011  v8muld  rd[i] = ra[i] * rb[3], i = 0..3 / a..d
-      100  v8min   rd[i] = min(ra[i], rb[i]), i = 0..3 / a..d
+      100  v8min   rd[i] = min(ra[i], rb[i]), i = 0..3 / a..d, (note: v8min rd, ra, ra is used for mov)
       101  v8max   rd[i] = max(ra[i], rb[i]), i = 0..3 / a..d
       110  v8adds  rd[i] = sat8(ra[i] + rb[i]), i = 0..3 / a..d
       111  v8subs  rd[i] = sat8(ra[i] - rb[i]), i = 0..3 / a..d
@@ -366,8 +366,8 @@ Where:
     0111  .anynn  any negative clear
     1000  .allc   all carry set
     1001  .allnc  all carry clear
-    1010  .allcs  any carry set
-    1011  .allcc  any carry clear
+    1010  .anycs  any carry set
+    1011  .anycc  any carry clear
     xxxx unknown
 
   relative is set if the target is relative.
