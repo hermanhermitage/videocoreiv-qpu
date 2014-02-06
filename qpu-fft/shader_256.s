@@ -480,7 +480,8 @@ shader_256:
    and initiate fetch.
 */
 
-/* 000007e0: 950c3dbf 100250c3 */  mov rb3, ra3; mov ra3, rb3
+/* 000007e0: 950c3dbf 100250c3 */  mov rb3, ra3; mov ra3, rb3        // swap in and out pointers
+
 /* 000007e8: 9528adbf 100248a3 */  mov r2, ra10; mov r3, rb10
 /* 000007f0: 14988dc0 d00229e7 */  and.setf -, elem_num, 8; nop
 /* 000007f8: 959f8492 d002c3a2 */  mov ra14, r2; mov.zc r2, r2 >> 8
