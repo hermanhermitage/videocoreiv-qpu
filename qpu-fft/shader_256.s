@@ -31,13 +31,67 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 shader_256:
+/*
+   On Entry:
+   
+   UNIFORMs:  For each QPU
+      0: Shared Twiddle Base
+      1: 
+      2: QPU number
+      3:
+      4:
+
+*/
+
+/*
+   Load constants:
+   
+   rb30 = Stride of 16 floats
+   rb31 = Stride of 32 complex numbers (2x float)
+
+   rb29 = 
+   ra30 = 
+   ra31 = 
+
+   ra28 = vw_setup
+   rb28 = vw_setup 
+*/
+
+/*
+   Strides
+*/
+
 /* 00000000: 00000040 e00217a7 */  ldi rb30, 0x00000040
 /* 00000008: 00000080 e00217e7 */  ldi rb31, 0x00000080
+
+/*
+   Constant Masks
+*/
+
 /* 00000010: 00005555 e0020767 */  ldi ra29, 0x00005555
 /* 00000018: 00003333 e00207a7 */  ldi ra30, 0x00003333
 /* 00000020: 00000f0f e00207e7 */  ldi ra31, 0x00000f0f
+
+/*
+   VPM Control words
+*/
+
 /* 00000028: 88104000 e0020727 */  ldi ra28, 0x88104000
 /* 00000030: 88104800 e0021727 */  ldi rb28, 0x88104800
+
+/*
+   From Uniform memory, fetch 3 words (unique per QPU, shared across each QPUs SIMD elements):
+      Shared twiddle base
+      Per QPU twiddle pointer
+      QPU Number
+      
+   Using tmu0, fetch data for each SIMD element from shared twiddle base and Per QPU twiddle pointer
+
+   Fetch the 6 * 16 twiddle floats, ie 3 * 16 complex numbers per QPU
+   2 * 16 of these will be common across the QPUs and the last 1 * 16 will be unique
+
+*/
+
 /* 00000038: 15827d80 10020827 */  mov r0, unif
 /* 00000040: 0c9c41c0 d0020867 */  add r1, r0, 4; nop
 /* 00000048: 11983dc0 d00208a7 */  shl r2, elem_num, 3; nop
@@ -63,9 +117,22 @@ shader_256:
 /* 000000e8: 0c9df3c0 a0020867 */  add r1, r1, rb31; nop; ldtmu0
 /* 000000f0: 159e7900 100212a7 */  mov rb10, r4
 /* 000000f8: 15827d80 10021167 */  mov rb5, unif
+
+/*
+   Constants for vw/r_setup
+*/
+
 /* 00000100: 00101200 e0020827 */  ldi r0, 0x00101200
 /* 00000108: 00000010 e0020867 */  ldi r1, 0x00000010
 /* 00000110: 00000002 e00208a7 */  ldi r2, 0x00000002
+
+/*
+   Calculate vw_setup for QPUi
+   
+   ra27
+   rb27
+   
+*/
 /* 00000118: 409c5017 100049e2 */  nop; mul24 r2, r2, rb5
 /* 00000120: cc9e7081 100246e0 */  add ra27, r0, r2; v8adds r0, r0, r1
 /* 00000128: cc9e7081 100256e0 */  add rb27, r0, r2; v8adds r0, r0, r1
@@ -75,6 +142,11 @@ shader_256:
 /* 00000148: 009e7000 100009e7 */  nop
 /* 00000150: 009e7000 100009e7 */  nop
 /* 00000158: 009e7000 100009e7 */  nop
+
+/*
+   Write QPU0
+*/
+
 /* 00000160: 156e7d80 10021c67 */  mov vw_setup, ra27
 /* 00000168: 159e7000 10020c27 */  mov vpm, r0
 /* 00000170: 159e7240 10020c27 */  mov vpm, r1
@@ -97,10 +169,12 @@ shader_256:
 /* 000001f8: 15727d80 10021c67 */  mov vw_setup, ra28
 /* 00000200: c0000040 e0021c67 */  ldi vw_setup, 0xc0000040
 /* 00000208: 8c05edf6 10024072 */  add ra1, ra1, rb30; mov vw_addr, ra1
+
 /* 00000210: 00000038 f0f81127 */  brr rb4; -, +56 // 0x00000268
 /* 00000218: 009e7000 100009e7 */  nop
 /* 00000220: 009e7000 100009e7 */  nop
 /* 00000228: 009e7000 100009e7 */  nop
+
 /* 00000230: 156e7d80 10021c67 */  mov vw_setup, ra27
 /* 00000238: 159e7000 10020c27 */  mov vpm, r0
 /* 00000240: 159e7240 10020c27 */  mov vpm, r1
@@ -108,10 +182,12 @@ shader_256:
 /* 00000250: 009e7000 100009e7 */  nop
 /* 00000258: 156e7d80 10020c67 */  mov vr_setup, ra27
 /* 00000260: 15c27d80 100009e7 */  mov.never -, vpm
+
 /* 00000268: 00000080 f0f801a7 */  brr ra6; -, +128 // 0x00000308
 /* 00000270: 009e7000 100009e7 */  nop
 /* 00000278: 009e7000 100009e7 */  nop
 /* 00000280: 009e7000 100009e7 */  nop
+
 /* 00000288: 159f2fc0 100009e7 */  mov.never -, vw_wait
 /* 00000290: 00000019 e80009e7 */  ldi.never -, 0x00000019
 /* 00000298: 00000001 e80009e7 */  ldi.never -, 0x00000001
@@ -128,38 +204,82 @@ shader_256:
 /* 000002f0: 00000006 e80009e7 */  ldi.never -, 0x00000006
 /* 000002f8: 0000001f e80009e7 */  ldi.never -, 0x0000001f
 /* 00000300: 00000007 e80009e7 */  ldi.never -, 0x00000007
+
 /* 00000308: 00000248 f0f811a7 */  brr rb6; -, +584 // 0x00000570
 /* 00000310: 009e7000 100009e7 */  nop
 /* 00000318: 009e7000 100009e7 */  nop
 /* 00000320: 009e7000 100009e7 */  nop
+
+/*
+   QPU1
+*/
+
 /* 00000328: 00000000 f0f409e7 */  bra -; -, ra0+0
 /* 00000330: 00000009 e80009e7 */  ldi.never -, 0x00000009
 /* 00000338: 00000011 e80009e7 */  ldi.never -, 0x00000011
 /* 00000340: 009e7000 100009e7 */  nop
+
+/*
+   QPU2
+*/
+
 /* 00000348: 00000000 f0f409e7 */  bra -; -, ra0+0
 /* 00000350: 0000000a e80009e7 */  ldi.never -, 0x0000000a
 /* 00000358: 00000012 e80009e7 */  ldi.never -, 0x00000012
 /* 00000360: 009e7000 100009e7 */  nop
+
+/*
+   QPU3
+*/
+
 /* 00000368: 00000000 f0f409e7 */  bra -; -, ra0+0
 /* 00000370: 0000000b e80009e7 */  ldi.never -, 0x0000000b
 /* 00000378: 00000013 e80009e7 */  ldi.never -, 0x00000013
 /* 00000380: 009e7000 100009e7 */  nop
+
+/*
+   QPU4
+*/
+
 /* 00000388: 00000000 f0f409e7 */  bra -; -, ra0+0
 /* 00000390: 0000000c e80009e7 */  ldi.never -, 0x0000000c
 /* 00000398: 00000014 e80009e7 */  ldi.never -, 0x00000014
 /* 000003a0: 009e7000 100009e7 */  nop
+
+/*
+   QPU5
+*/
+
 /* 000003a8: 00000000 f0f409e7 */  bra -; -, ra0+0
 /* 000003b0: 0000000d e80009e7 */  ldi.never -, 0x0000000d
 /* 000003b8: 00000015 e80009e7 */  ldi.never -, 0x00000015
 /* 000003c0: 009e7000 100009e7 */  nop
+
+/*
+   QPU6
+*/
+
 /* 000003c8: 00000000 f0f409e7 */  bra -; -, ra0+0
 /* 000003d0: 0000000e e80009e7 */  ldi.never -, 0x0000000e
 /* 000003d8: 00000016 e80009e7 */  ldi.never -, 0x00000016
 /* 000003e0: 009e7000 100009e7 */  nop
+
+/*
+   QPU7
+*/
+
 /* 000003e8: 00000000 f0f409e7 */  bra -; -, ra0+0
 /* 000003f0: 0000000f e80009e7 */  ldi.never -, 0x0000000f
 /* 000003f8: 00000017 e80009e7 */  ldi.never -, 0x00000017
 /* 00000400: 009e7000 100009e7 */  nop
+
+/*
+   Crunch out a round of complex number arithmetic
+   Enter with:
+      r0 = real part
+      r1 = complex part
+*/
+
 /* 00000408: 14981dc0 d00229e7 */  and.setf -, elem_num, 1; nop
 /* 00000410: 202e7030 1000d9c2 */  nop; fmul.zc ra2, ra11, r0
 /* 00000418: 209cb039 1000c9e2 */  nop; fmul.zc r2, rb11, r1
@@ -201,21 +321,46 @@ shader_256:
 /* 00000538: 829f8609 d0064822 */  fsub.zc r0, r3, r0; mov r2, r1 >> 8
 /* 00000540: 819f8449 d0044863 */  fadd.zs r1, r2, r1; mov r3, r1 >> 8
 /* 00000548: 029e7640 10060867 */  fsub.zc r1, r3, r1
+
+/*
+   Fetch the next complex number, and jump to the arithmetic routine.
+*/
+
 /* 00000550: fffffe98 f0f809e7 */  brr -; -, -360 // 0x00000408
 /* 00000558: 009e7000 a00009e7 */  nop; nop; ldtmu0
 /* 00000560: 159e7900 a0020827 */  mov r0, r4; nop; ldtmu0
 /* 00000568: 159e7900 10020867 */  mov r1, r4
+
+/*
+   Calculate address for appropriate QPU vr/w routines.
+*/
+
 /* 00000570: 159c5fc0 10022827 */  mov.setf r0, rb5
 /* 00000578: 0d9c11c0 d0020827 */  sub r0, r0, 1; nop
 /* 00000580: 119c51c0 d0020827 */  shl r0, r0, 5; nop
 /* 00000588: 0c9c6e00 100601a7 */  add.zc ra6, rb6, r0
 /* 00000590: 159c4fc0 10060127 */  mov.zc ra4, rb4
+
+/*
+   Fetch the next FFT job.
+   
+      ra3 = in pointer (or zero if done)
+      rb3 = out pointer (or 1 if done and QPU0)
+      
+   Call the exit if the input pointer is zero (end of job marker).
+*/
+
 /* 00000598: 15827d80 100220e7 */  mov.setf ra3, unif
 /* 000005a0: 15827d80 100210e7 */  mov rb3, unif
 /* 000005a8: 00000420 f00809e7 */  brr.allz -; -, +1056 // 0x000009e8
 /* 000005b0: 95208dbf 100248a3 */  mov r2, ra8; mov r3, rb8
 /* 000005b8: 14988dc0 d00229e7 */  and.setf -, elem_num, 8; nop
 /* 000005c0: 959f8492 d002c3a2 */  mov ra14, r2; mov.zc r2, r2 >> 8
+
+/*
+   Process the next job.
+*/
+
 /* 000005c8: 959f86db d002d3a3 */  mov rb14, r3; mov.zc r3, r3 >> 8
 /* 000005d0: 14984dc0 d00229e7 */  and.setf -, elem_num, 4; nop
 /* 000005d8: 959f4492 d002c362 */  mov ra13, r2; mov.zc r2, r2 >> 4
@@ -271,18 +416,30 @@ shader_256:
 /* 00000768: 0c9c41c0 d0020867 */  add r1, r0, 4; nop
 /* 00000770: 0c0e7c00 10020e27 */  add t0s, ra3, r0
 /* 00000778: 0c0e7c40 10020e27 */  add t0s, ra3, r1
+
+/*
+   Crunch first round of arithmetic.
+*/
+
 /* 00000780: fffffdb0 f0f80027 */  brr ra0; -, -592 // 0x00000550
 /* 00000788: 009e7000 100009e7 */  nop
 /* 00000790: 956dbff6 100246db */  mov ra27, rb27; mov rb27, ra27
 /* 00000798: 9571cff6 1002471c */  mov ra28, rb28; mov rb28, ra28
+
+/*
+   And second round.
+*/
+
 /* 000007a0: fffffd90 f0f80027 */  brr ra0; -, -624 // 0x00000550
 /* 000007a8: 009e7000 100009e7 */  nop
 /* 000007b0: 956dbff6 100246db */  mov ra27, rb27; mov rb27, ra27
 /* 000007b8: 9571cff6 1002471c */  mov ra28, rb28; mov rb28, ra28
+
 /* 000007c0: 00000000 f0f4c027 */  bra ra0; -, ra6+0
 /* 000007c8: 009e7000 100009e7 */  nop
 /* 000007d0: 009e7000 100009e7 */  nop
 /* 000007d8: 009e7000 100009e7 */  nop
+
 /* 000007e0: 950c3dbf 100250c3 */  mov rb3, ra3; mov ra3, rb3
 /* 000007e8: 9528adbf 100248a3 */  mov r2, ra10; mov r3, rb10
 /* 000007f0: 14988dc0 d00229e7 */  and.setf -, elem_num, 8; nop
@@ -312,10 +469,15 @@ shader_256:
 /* 000008b0: 0c9c41c0 d0020867 */  add r1, r0, 4; nop
 /* 000008b8: 0c0e7c00 10020e27 */  add t0s, ra3, r0
 /* 000008c0: 0c0e7c40 10020e27 */  add t0s, ra3, r1
+
+/*
+*/
+
 /* 000008c8: fffffc68 f0f80027 */  brr ra0; -, -920 // 0x00000550
 /* 000008d0: 009e7000 100009e7 */  nop
 /* 000008d8: 956dbff6 100246db */  mov ra27, rb27; mov rb27, ra27
 /* 000008e0: 9571cff6 1002471c */  mov ra28, rb28; mov rb28, ra28
+
 /* 000008e8: 9538edbf 100248a3 */  mov r2, ra14; mov r3, rb14
 /* 000008f0: 20267016 100049e0 */  nop; fmul r0, r2, ra9
 /* 000008f8: 209c9017 100049e1 */  nop; fmul r1, r2, rb9
@@ -336,18 +498,30 @@ shader_256:
 /* 00000970: 14981dc0 d00229e7 */  and.setf -, elem_num, 1; nop
 /* 00000978: 959f1492 d002c2e2 */  mov ra11, r2; mov.zc r2, r2 >> 1
 /* 00000980: 959f16db d002d2e3 */  mov rb11, r3; mov.zc r3, r3 >> 1
+
+/*
+*/
+
 /* 00000988: fffffba8 f0f80027 */  brr ra0; -, -1112 // 0x00000550
 /* 00000990: 009e7000 100009e7 */  nop
 /* 00000998: 956dbff6 100246db */  mov ra27, rb27; mov rb27, ra27
 /* 000009a0: 9571cff6 1002471c */  mov ra28, rb28; mov rb28, ra28
+
 /* 000009a8: 00000000 f0f4c027 */  bra ra0; -, ra6+0
 /* 000009b0: 009e7000 100009e7 */  nop
 /* 000009b8: 009e7000 100009e7 */  nop
 /* 000009c0: 009e7000 100009e7 */  nop
+
 /* 000009c8: fffffbb0 f0f809e7 */  brr -; -, -1104 // 0x00000598
 /* 000009d0: 009e7000 100009e7 */  nop
 /* 000009d8: 009e7000 100009e7 */  nop
 /* 000009e0: 009e7000 100009e7 */  nop
+
+/*
+   All done, raise an IRQ if QPU0 (rb3 = 1, if QPU0)
+   End the thread.
+*/
+
 /* 000009e8: 159c3fc0 100209a7 */  mov irq, rb3
 /* 000009f0: 009e7000 300009e7 */  nop; nop; thrend
 /* 000009f8: 009e7000 100009e7 */  nop
