@@ -36,11 +36,19 @@ shader_256:
    
    UNIFORMs:  For each QPU
       0: Shared Twiddle Base
-      1: 
+      1: Unique Twiddle Base
       2: QPU number
-      3:
-      4:
-
+      
+      3: job0 in pointer
+      4: job0 out pointer
+      
+      5: job0 in pointer
+      6: job1 out pointer
+      
+      ...
+      
+      0 job terminator
+      0 completion irq (except for QPU0, which has 1).
 */
 
 /*
@@ -49,9 +57,9 @@ shader_256:
    rb30 = Stride of 16 floats
    rb31 = Stride of 32 complex numbers (2x float)
 
-   rb29 = 
-   ra30 = 
-   ra31 = 
+   rb29 = mask for data fetching
+   ra30 = mask for data fetching
+   ra31 = mask for data fetching
 
    ra28 = vw_setup
    rb28 = vw_setup 
@@ -81,15 +89,15 @@ shader_256:
 
 /*
    From Uniform memory, fetch 3 words (unique per QPU, shared across each QPUs SIMD elements):
+   
       Shared twiddle base
-      Per QPU twiddle pointer
+      Per QPU / unique twiddle pointer
       QPU Number
       
    Using tmu0, fetch data for each SIMD element from shared twiddle base and Per QPU twiddle pointer
 
    Fetch the 6 * 16 twiddle floats, ie 3 * 16 complex numbers per QPU
    2 * 16 of these will be common across the QPUs and the last 1 * 16 will be unique
-
 */
 
 /* 00000038: 15827d80 10020827 */  mov r0, unif
@@ -144,7 +152,7 @@ shader_256:
 /* 00000158: 009e7000 100009e7 */  nop
 
 /*
-   Write QPU0
+   ra4: Write QPU0 (exit to ra0)
 */
 
 /* 00000160: 156e7d80 10021c67 */  mov vw_setup, ra27
@@ -175,6 +183,10 @@ shader_256:
 /* 00000220: 009e7000 100009e7 */  nop
 /* 00000228: 009e7000 100009e7 */  nop
 
+/*
+: Write QPU1-7 (exit to ra6)
+*/
+
 /* 00000230: 156e7d80 10021c67 */  mov vw_setup, ra27
 /* 00000238: 159e7000 10020c27 */  mov vpm, r0
 /* 00000240: 159e7240 10020c27 */  mov vpm, r1
@@ -187,6 +199,10 @@ shader_256:
 /* 00000270: 009e7000 100009e7 */  nop
 /* 00000278: 009e7000 100009e7 */  nop
 /* 00000280: 009e7000 100009e7 */  nop
+
+/*
+   ra6: Write2 QPU0
+*/
 
 /* 00000288: 159f2fc0 100009e7 */  mov.never -, vw_wait
 /* 00000290: 00000019 e80009e7 */  ldi.never -, 0x00000019
@@ -211,7 +227,7 @@ shader_256:
 /* 00000320: 009e7000 100009e7 */  nop
 
 /*
-   QPU1
+   Write2 QPU1
 */
 
 /* 00000328: 00000000 f0f409e7 */  bra -; -, ra0+0
@@ -220,7 +236,7 @@ shader_256:
 /* 00000340: 009e7000 100009e7 */  nop
 
 /*
-   QPU2
+   Write2 QPU2
 */
 
 /* 00000348: 00000000 f0f409e7 */  bra -; -, ra0+0
@@ -229,7 +245,7 @@ shader_256:
 /* 00000360: 009e7000 100009e7 */  nop
 
 /*
-   QPU3
+   Write2 QPU3
 */
 
 /* 00000368: 00000000 f0f409e7 */  bra -; -, ra0+0
@@ -238,7 +254,7 @@ shader_256:
 /* 00000380: 009e7000 100009e7 */  nop
 
 /*
-   QPU4
+   Write2 QPU4
 */
 
 /* 00000388: 00000000 f0f409e7 */  bra -; -, ra0+0
@@ -247,7 +263,7 @@ shader_256:
 /* 000003a0: 009e7000 100009e7 */  nop
 
 /*
-   QPU5
+   Write2 QPU5
 */
 
 /* 000003a8: 00000000 f0f409e7 */  bra -; -, ra0+0
@@ -256,7 +272,7 @@ shader_256:
 /* 000003c0: 009e7000 100009e7 */  nop
 
 /*
-   QPU6
+   Write2 QPU6
 */
 
 /* 000003c8: 00000000 f0f409e7 */  bra -; -, ra0+0
@@ -265,7 +281,7 @@ shader_256:
 /* 000003e0: 009e7000 100009e7 */  nop
 
 /*
-   QPU7
+   Write2 QPU7
 */
 
 /* 000003e8: 00000000 f0f409e7 */  bra -; -, ra0+0
@@ -317,6 +333,11 @@ shader_256:
 /* 00000518: 203a7031 1000c9e1 */  nop; fmul.zc r1, ra14, r1
 /* 00000520: 819f82c0 d0064862 */  fadd.zc r1, r1, r3; mov r2, r0 >> 8
 /* 00000528: 819f8400 d0044823 */  fadd.zs r0, r2, r0; mov r3, r0 >> 8
+
+/*
+   Now call: Write QPUi
+*/
+
 /* 00000530: 00000000 f0f489e7 */  bra -; -, ra4+0
 /* 00000538: 829f8609 d0064822 */  fsub.zc r0, r3, r0; mov r2, r1 >> 8
 /* 00000540: 819f8449 d0044863 */  fadd.zs r1, r2, r1; mov r3, r1 >> 8
@@ -333,6 +354,10 @@ shader_256:
 
 /*
    Calculate address for appropriate QPU vr/w routines.
+   
+   ra6 =
+   ra4 = Write QPU0, or Write QPU1-7 (according to QPU number)
+   
 */
 
 /* 00000570: 159c5fc0 10022827 */  mov.setf r0, rb5
@@ -352,13 +377,18 @@ shader_256:
 
 /* 00000598: 15827d80 100220e7 */  mov.setf ra3, unif
 /* 000005a0: 15827d80 100210e7 */  mov rb3, unif
+
+/*
+   Exit if jobs done.
+*/
+
 /* 000005a8: 00000420 f00809e7 */  brr.allz -; -, +1056 // 0x000009e8
 /* 000005b0: 95208dbf 100248a3 */  mov r2, ra8; mov r3, rb8
 /* 000005b8: 14988dc0 d00229e7 */  and.setf -, elem_num, 8; nop
 /* 000005c0: 959f8492 d002c3a2 */  mov ra14, r2; mov.zc r2, r2 >> 8
 
 /*
-   Process the next job.
+   Calculate fetch addresses of the next 4 (* 16) floats
 */
 
 /* 000005c8: 959f86db d002d3a3 */  mov rb14, r3; mov.zc r3, r3 >> 8
@@ -435,10 +465,18 @@ shader_256:
 /* 000007b0: 956dbff6 100246db */  mov ra27, rb27; mov rb27, ra27
 /* 000007b8: 9571cff6 1002471c */  mov ra28, rb28; mov rb28, ra28
 
+/*
+   Subroutine call to Write2 QPUi
+*/
+
 /* 000007c0: 00000000 f0f4c027 */  bra ra0; -, ra6+0
 /* 000007c8: 009e7000 100009e7 */  nop
 /* 000007d0: 009e7000 100009e7 */  nop
 /* 000007d8: 009e7000 100009e7 */  nop
+
+/*
+   Calculate fetch addresses of the next 4 (* 16) floats
+*/
 
 /* 000007e0: 950c3dbf 100250c3 */  mov rb3, ra3; mov ra3, rb3
 /* 000007e8: 9528adbf 100248a3 */  mov r2, ra10; mov r3, rb10
@@ -471,6 +509,7 @@ shader_256:
 /* 000008c0: 0c0e7c40 10020e27 */  add t0s, ra3, r1
 
 /*
+   Crunch third round
 */
 
 /* 000008c8: fffffc68 f0f80027 */  brr ra0; -, -920 // 0x00000550
@@ -500,6 +539,7 @@ shader_256:
 /* 00000980: 959f16db d002d2e3 */  mov rb11, r3; mov.zc r3, r3 >> 1
 
 /*
+   Crunch fourth round
 */
 
 /* 00000988: fffffba8 f0f80027 */  brr ra0; -, -1112 // 0x00000550
@@ -507,10 +547,18 @@ shader_256:
 /* 00000998: 956dbff6 100246db */  mov ra27, rb27; mov rb27, ra27
 /* 000009a0: 9571cff6 1002471c */  mov ra28, rb28; mov rb28, ra28
 
+/*
+   Subroutine call to Write2 QPUi
+*/
+
 /* 000009a8: 00000000 f0f4c027 */  bra ra0; -, ra6+0
 /* 000009b0: 009e7000 100009e7 */  nop
 /* 000009b8: 009e7000 100009e7 */  nop
 /* 000009c0: 009e7000 100009e7 */  nop
+
+/*
+   Loop around to pick up the next FFT job
+*.
 
 /* 000009c8: fffffbb0 f0f809e7 */  brr -; -, -1104 // 0x00000598
 /* 000009d0: 009e7000 100009e7 */  nop
