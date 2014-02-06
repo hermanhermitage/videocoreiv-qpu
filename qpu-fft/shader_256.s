@@ -388,7 +388,8 @@ shader_256:
 /* 000005c0: 959f8492 d002c3a2 */  mov ra14, r2; mov.zc r2, r2 >> 8
 
 /*
-   Calculate fetch addresses of the next 4 (* 16) floats
+   Calculate fetch addresses of the next 4 (* 16) floats,
+   and initiate fetch.
 */
 
 /* 000005c8: 959f86db d002d3a3 */  mov rb14, r3; mov.zc r3, r3 >> 8
@@ -475,7 +476,8 @@ shader_256:
 /* 000007d8: 009e7000 100009e7 */  nop
 
 /*
-   Calculate fetch addresses of the next 4 (* 16) floats
+   Calculate fetch addresses of the next 4 (* 16) floats,
+   and initiate fetch.
 */
 
 /* 000007e0: 950c3dbf 100250c3 */  mov rb3, ra3; mov ra3, rb3
