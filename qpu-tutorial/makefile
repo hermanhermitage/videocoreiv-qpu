@@ -1,12 +1,9 @@
+all:	qpu-01 qpu-02
 
-C = mailbox.c qpu-01.c
+qpu-01: mailbox.c qpu-01.c
+	gcc -o qpu-01 mailbox.c qpu-01.c
 
-B = qpu-01
-
-F = -o $(B)
-
-$(B):	$(H) $(C)
-	gcc $(F) $(C)
-
+qpu-02: mailbox.c qpu-02.c
+	gcc -o qpu-02 mailbox.c qpu-02.c
 clean:
-	rm -f $(B)
+	rm -f qpu-01 qpu-02
