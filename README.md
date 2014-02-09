@@ -304,29 +304,29 @@ Where:
     100110  elem_num   qpu_num    irq?       irq?
     100111  (nop)      (nop)      (nop)      (nop)
     101000                        unif_addr  unif_addr
-    101000  x_coord    y_coord    x_coord    y_coord
-    101000  ms_mask    rev_flag   ms_mask    rev_flag
-    101000                        stencil    stencil
-    101000                        tlbz       tlbz       
-    101000                        tlbm       tlbm       
-    101000                        tlbc       tlbc       
-    101000                        tlbam?     tlbam?     
-    101000  vpm        vpm        vpm        vpm        
-    101000  vr_busy    vw_busy    vr_setup   vw_setup   
-    101000  vr_wait    vw_wait    vr_addr    vw_addr
-    101000  mutex      mutex      mutex      mutex
-    101000                        recip      recip
-    101000                        recipsqrt  recipsqrt
-    101000                        exp        exp
-    101000                        log        log
-    101000                        t0s        t0s
-    101000                        t0t        t0t
-    101000                        t0r        t0r
-    101000                        t0b        t0b
-    101000                        t1s        t1s
-    101000                        t1t        t1t
-    101000                        t1r        t1r
-    101000                        t1b        t1b  
+    101001  x_coord    y_coord    x_coord    y_coord
+    101010  ms_mask    rev_flag   ms_mask    rev_flag
+    101011                        stencil    stencil
+    101100                        tlbz       tlbz       
+    101101                        tlbm       tlbm       
+    101110                        tlbc       tlbc       
+    101111                        tlbam?     tlbam?     
+    110000  vpm        vpm        vpm        vpm        
+    110001  vr_busy    vw_busy    vr_setup   vw_setup   
+    110010  vr_wait    vw_wait    vr_addr    vw_addr
+    110011  mutex      mutex      mutex      mutex
+    110100                        recip      recip
+    110101                        recipsqrt  recipsqrt
+    110110                        exp        exp
+    110111                        log        log
+    111000                        t0s        t0s
+    111001                        t0t        t0t
+    111010                        t0r        t0r
+    111011                        t0b        t0b
+    111100                        t1s        t1s
+    111101                        t1t        t1t
+    111110                        t1r        t1r
+    111111                        t1b        t1b  
       
   rb - Small constants, active when signal/control operation is 1101:
   
