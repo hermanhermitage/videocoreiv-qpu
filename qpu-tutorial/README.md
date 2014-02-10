@@ -43,8 +43,9 @@ programmer must directly deal with branch delay slots (3), thread switch
  
 Mutliple slots:
  - Each instruction typically has three slots that execute concurrently: add-operation, mul-operation and control operations.  eg:
-  add r0, r1, r2; fmul ra0, r2, r3; ldtmu0
- 
+```
+add r0, r1, r2; fmul ra0, r2, r3; ldtmu0
+```
 Registers:  All registers are 32 bits wide, and 16 lanes wide.
 - 4 Fast Registers (accumulators), supporting back to back read/writes. r0, r1, r2, r3.
 - 32 bank A registers. ra0, ra1, ..., ra31.  These need a cycle delay between writing and reading the same register.
@@ -56,18 +57,24 @@ Peripheral/IO Registers:
  - r4 is typically the result of a maths functional unit (log, exp, etc) or a texture fetch.
  - ra32...ra63 to access vpm, unif, etc...
  - ra32...ra64 to access vpm, unif, etc...
-  eg. mov r0, unif  // load next uniform into r0
- 
+  eg. 
+```
+mov r0, unif  // load next uniform into r0
+```
+
 Predication:
   eg.
-  mov.nz r0, r1, r2 // r0 is only updated in those lanes with zero flag not set
-  bra.anyz ... // branch is taken if any lane z flag is set
-  bra.allz ... // branch is taken if all lane's z flag is set
- 
+```
+mov.nz r0, r1, r2 // r0 is only updated in those lanes with zero flag not set
+bra.anyz ... // branch is taken if any lane z flag is set
+bra.allz ... // branch is taken if all lane's z flag is set
+```
+
 Rotator (lane shift)
-  - Allows inter-lane data access
-  eg. mov r0, r1 << 8 // r0 = [r1:8, r1:9, ..., r1:7] // not to be confused with bit shift
- 
+  - Allows inter-lane data access, eg.
+```
+mov r0, r1 << 8 // r0 = [r1:8, r1:9, ..., r1:7] // not to be confused with bit shift
+```
 Packer/Unpacker
   - Allow exchange of data between packed byte and float formats etc.
  
@@ -75,20 +82,29 @@ Memory Access:
  - No direct loads and stores to memory.
  
  - Random access reads via texture lookup
-  - mov t0s, address 
-  - ... wait as long as you can to absorb latency, each SIMD lane may have provided a different address so up to 16 fetches...
-  - <addop>; <mulop> ; ldtmu0 // texture value available in r4 in next cycle
-  - mov r0, r4  // texture/memory result returns via r4 = [ *address:0, *address:1, ..., *address:15 ]
- 
+```
+mov t0s, address 
+...
+  as many instructions as you can here to hide latency of up to 16 fetches
+...
+<addop>; <mulop> ; ldtmu0 // texture value available in r4 in next cycle
+mov r0, r4  // texture/memory result returns via r4 = [ *address:0, *address:1, ..., *address:15 ]
+```
+
  - Common (same value per SIMD lane) sequential reads via Uniforms.  eg
-   - mov r0, unif  // u = *unif++; r0 = [u, u, ...., u ]
- 
+```
+mov r0, unif  // u = *unif++; r0 = [u, u, ...., u ]
+```
  - Individual (unique value per SIMD lane) sequential reads via VPM.
-  - mov r0, vpm // r0 = [*(vpm + vertex_stride*0), *(vpm+vertex_stride*1), ..., *(vpm+vertex_stride*15], vpm += attribute_step
- 
+```
+mov r0, vpm // r0 = [*(vpm + vertex_stride*0), ..., *(vpm+vertex_stride*15], vpm += attribute_step
+```
+
  - Individual (unique value per SIMD lane) squential writes via VPM.
-  - mov vpm, r0 // *(vpm + vertex_stride*0) = r0:0, *(vpm + vertex_stride*1) = r0:1, ... *(vpm + vertex_stride*1) = r0:15, vpm += attribute_step 
- 
+```
+mov vpm, r0 // *(vpm + vertex_stride*0) = r0:0, ... *(vpm + vertex_stride*1) = r0:15, vpm += attribute_step 
+```
+
   - VPM management is explicit.  That is, it is typically transferred to and from L2/SDRAM in blocks using DMA.  So a program typically DMAs data into VPM, processes it and writes new results to VPM, and then does a DMA transfer to place the result in L2/SDRAM.
  
   - Tile Buffer.  The other main method of memory access for rasterization and blending is the tile buffer.  By rendering the scene in tiles (locality), this saves round tripping through the memory hierarchy for framebuffer access.
