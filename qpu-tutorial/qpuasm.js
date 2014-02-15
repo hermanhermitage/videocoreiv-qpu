@@ -116,11 +116,11 @@ function trim(s) { return s.trim(); }
 
 function evaluateExpr(expr, vars) { try { with (vars) return eval(expr); } catch(e) { return e; }; }
 
-function evaluateSrc(src, symbols) {
+function evaluateSrc(src, symbols, error) {
 	if (imm[src] == null) {
 		var value = evaluateExpr(src, symbols);
 		if (value instanceof Error)
-			error("Error: "+e.message+" in '"+src+"'");
+			error("Error: "+value.message+" in '"+src+"'");
 		else
 			src = value;
 	}
@@ -362,7 +362,7 @@ function assemble(program, options) {
 					add_src1 = slots[i][2];
 					if (add_src1 != null && acc_names[add_src1] == null && banka_r[add_src1] == null && bankb_r[add_src1] == null) {
 						// add_src2 is not a acc, ra or rb, now try a small const
-						add_src1 = evaluateSrc(add_src1, symbols);		
+					    add_src1 = evaluateSrc(add_src1, symbols, error);		
 
 						if (imm[add_src1] && rb==null && op==null) {
 							rb = imm[add_src1];
@@ -378,7 +378,7 @@ function assemble(program, options) {
 					if (add_src2 != null && acc_names[add_src2] == null && banka_r[add_src2] == null && bankb_r[add_src2] == null) {
 						// add_src2 is not a acc, ra or rb, now try a small const
 
-						add_src2 = evaluateSrc(add_src2, symbols);
+					    add_src2 = evaluateSrc(add_src2, symbols, error);
 
 						if (imm[add_src2] && ((rb==null && op==null) || (rb==imm[add_src2]) && op==ops['nopi'])) {
 							rb = imm[add_src2];
@@ -412,7 +412,7 @@ function assemble(program, options) {
 					mul_src1 = slots[i][2];
 					if (mul_src1 != null && acc_names[mul_src1] == null && banka_r[mul_src1] == null && bankb_r[mul_src1] == null) {
 						// if its not an immediate as is, try and evaluate expr
-						mul_src1 = evaluateSrc(mul_src1, symbols);
+					    mul_src1 = evaluateSrc(mul_src1, symbols, error);
 
 						if (imm[mul_src1] && ((rb==null && op==null) || (op==ops['nopi'] && rb==imm[mul_src1]))) {
 							rb = imm[mul_src1];
@@ -427,7 +427,7 @@ function assemble(program, options) {
 						mul_src2 = mul_src1;
 					if (mul_src2 != null && acc_names[mul_src2] == null && banka_r[mul_src2] == null && bankb_r[mul_src2] == null) {
 						// if its not an immediate as is, try and evaluate expr
-						mul_src2 = evaluateSrc(mul_src2, symbols);
+					    mul_src2 = evaluateSrc(mul_src2, symbols, error);
 
 						if ((imm[mul_src2] && rb==null && op==null) || (op==ops['nopi'] && rb==imm[mul_src2])) {
 							rb = imm[mul_src2];
