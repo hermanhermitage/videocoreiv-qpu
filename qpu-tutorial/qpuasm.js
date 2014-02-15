@@ -410,6 +410,10 @@ function assemble(program, options) {
 					if (mul_dst != null && banka_w[mul_dst] == null && bankb_w[mul_dst] == null)
 						error("Error: invalid destination register in second (mul) slot.");
 					mul_src1 = slots[i][2];
+					if (mul_src1 != null && (mul_src1.search(">>") != -1 || mul_src1.search("<<") != -1)) {
+					    show("WARNING! Rotator not supported yet, will produce garbage!");
+					    mul_src1 = mul_src1.split(">",1)[0].split(" ",0)[0]
+					}
 					if (mul_src1 != null && acc_names[mul_src1] == null && banka_r[mul_src1] == null && bankb_r[mul_src1] == null) {
 						// if its not an immediate as is, try and evaluate expr
 					    mul_src1 = evaluateSrc(mul_src1, symbols, error);
@@ -425,6 +429,10 @@ function assemble(program, options) {
 					mul_src2 = slots[i][3];
 					if (mul_src2 == null)
 						mul_src2 = mul_src1;
+					if (mul_src2 != null && (mul_src2.search(">>") != -1 || mul_src2.search("<<") != -1)) {
+					    show("WARNING! Rotator not supported yet, will produce garbage!");
+					    mul_src2 = mul_src2.split(">",1)[0].split(" ",0)[0]
+					}
 					if (mul_src2 != null && acc_names[mul_src2] == null && banka_r[mul_src2] == null && bankb_r[mul_src2] == null) {
 						// if its not an immediate as is, try and evaluate expr
 					    mul_src2 = evaluateSrc(mul_src2, symbols, error);
