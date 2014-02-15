@@ -69,17 +69,21 @@ int main(int argc, char *argv[]) {
 
 	/* Build Uniforms */
 	unsigned *qpu_uniform = p;
-	*p++ = 1;
-	*p++ = (unsigned)(gpu_pointer+2048);
+	int i;
+	for (i = 0; i < GPU_QPUS; ++i) {
+	  *p++ = 1;
+	  *p++ = (unsigned)(gpu_pointer+2048+i*16*6*4);
+	}
 	
 	/* Build QPU Launch messages */
 	unsigned *qpu_msg = p;
-	*p++ = as_gpu_address(qpu_uniform);
-	*p++ = as_gpu_address(qpu_code);
+	for (i = 0; i < GPU_QPUS; ++i) {
+	  *p++ = as_gpu_address(qpu_uniform+i*4*2);
+	  *p++ = as_gpu_address(qpu_code);
+	}
 
 	// Test buffer
 	printf("before:");
-	int i;
 	for (i=0; i<size/4; i++) {
 		if ((i%8)==0) printf("\n%08x:", gpu_pointer+i*4);
 		printf(" %08x", ((unsigned *)arm_pointer)[i]);
