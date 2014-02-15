@@ -314,7 +314,8 @@ function assemble(program, options) {
 				bracc = bcc[pred];
 				var wa = banka_w[slots[i][1]];
 				if (wa == null) {
-					wb = bankb_w[slots[i][1]];
+					wa = bankb_w[slots[i][1]];
+					X = 1;
 				}
 				if (wa == null && wb == null)
 					error("Error: invalid link register in brr instruction.");
@@ -335,7 +336,7 @@ function assemble(program, options) {
 				} else {
 				    ra = 0; // TODO: Is this the right value for ra if reg == 0? What is ra meaning if reg == 0?
 				}
-				iword0 = target; iword1 = (op << 28 | bracc << 20 | 1 << 19 | reg << 18 | ra << 13 | F << 12 | wa << 6 | wb << 0) >>> 0;
+				iword0 = target; iword1 = (op << 28 | bracc << 20 | 1 << 19 | reg << 18 | ra << 13 | X << 12 | wa << 6 | wb << 0) >>> 0;
 				if (slots.length > 1)
 				    error("Error: brr doesn't allow additional instruction slots");
 				break;
