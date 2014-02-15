@@ -290,6 +290,8 @@ function assemble(program, options) {
 				data = evaluateExpr(slots[i][2], symbols);
 				addcc = cc[pred];
 				iword0 = data; iword1 = (op << 28 | 0 << 20 | addcc << 17 | mulcc << 14 | F << 13 | X << 12 | wa << 6 | wb << 0) >>> 0;
+				if (slots.length > 1)
+				    error("Error:ldi doesn't allow additional instruction slots");
 				break;
 			}
 			else if (i==0 && inst == "brr") { // brr.bcc reg, target
@@ -311,6 +313,8 @@ function assemble(program, options) {
 				target -= (_.pc + 8*4);
 				var reg = 0;
 				iword0 = target; iword1 = (op << 28 | bracc << 20 | 1 << 19 | reg << 18 | ra << 13 | F << 12 | wa << 6 | wb << 0) >>> 0;
+				if (slots.length > 1)
+				    error("Error: brr doesn't allow additional instruction slots");
 				break;
 			}
 			else if (i==0 && inst == "bra") { // bra.bcc wreg, reg
@@ -332,6 +336,8 @@ function assemble(program, options) {
 				var reg = 1;
 				target = 0;
 				iword0 = target; iword1 = (op << 28 | bracc << 20 | 0 << 19 | reg << 18 | ra << 13 | F << 12 | wa << 6 | wb << 0) >>> 0;
+				if (slots.length > 1)
+				    error("Error: bra doesn't allow additional instruction slots");
 				break;
 			}
 			if (addop == null) {
