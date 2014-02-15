@@ -114,13 +114,15 @@ function rsplit(s, c) { return [''].concat(s.split(c, 2)).slice(-2); }
 function splitOnFirst(s, c) { var i = s.indexOf(c); return i<0 ? [s] : [s.substring(0, i), s.substring(i+1)]; }
 function trim(s) { return s.trim(); }
 
-function evaluateExpr(expr, vars) { try { with (vars) return eval(expr); } catch(e) { return e; }; }
+function evaluateExpr(expr, vars) { try { with (vars) return eval(expr); } catch(e) { error("Error: "+e.message+" in '"+expr+"'"); return e; }; }
+
+var error;
 
 function evaluateSrc(src, symbols) {
 	if (imm[src] == null) {
 		var value = evaluateExpr(src, symbols);
 		if (value instanceof Error)
-			error("Error: "+e.message+" in '"+src+"'");
+			error("Error: "+value.message+" in '"+src+"'");
 		else
 			src = value;
 	}
@@ -185,10 +187,11 @@ function assemble(program, options) {
 	for (var pass=0; pass<2; pass++) {
 
 	var show = pass!=1 ? nothing : console.log;
-	var error = pass!=1 ? nothing : function() {
+	error = pass!=1 ? nothing : function() {
 		var util = require('util');
+		console.log(options.in+':'+linenumber);
 		console.log(util.format.apply(this, arguments));
-		process.exit(-1);
+		if (!options['ignore-errors']) process.exit(-1);
 	};
 
 	_.pc = options.targetaddress || 0;
@@ -347,7 +350,7 @@ function assemble(program, options) {
 						addcc = 0;
 
 					if (slots[i].length-1 != instructionArgumentCount(inst))
-						error("Error: Operation '"+inst+"' found", slots[i].length-1, "arguments, needs", instructionArgumentCount(inst), "arguments.");
+						error("Error: Operation '"+inst+"' found", slots[i].length-1, "arguments, expected", instructionArgumentCount(inst), "arguments.");
 
 					add_dst = slots[i][1];
 					if (add_dst != null && banka_w[add_dst] == null && bankb_w[add_dst] == null)
