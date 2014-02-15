@@ -300,7 +300,7 @@ after_write_2_qpu_0:
 #      r0 = real part
 #      r1 = complex part
 #*/
-
+complex_num_round:
   and.setf -, elem_num, 1; nop #/* 00000408: 14981dc0 d00229e7 */
   nop; fmul.zc ra2, ra11, r0 #/* 00000410: 202e7030 1000d9c2 */
   nop; fmul.zc r2, rb11, r1 #/* 00000418: 209cb039 1000c9e2 */
@@ -351,8 +351,8 @@ after_write_2_qpu_0:
 #/*
 #   Fetch the next complex number, and jump to the arithmetic routine.
 #*/
-
-  brr -; -, -360 #// 0x00000408 #/* 00000550: fffffe98 f0f809e7 */
+fetch_complex_and_iter:
+  brr -, complex_num_round #// 0x00000408 #/* 00000550: fffffe98 f0f809e7 */
   nop; nop; ldtmu0 #/* 00000558: 009e7000 a00009e7 */
   mov r0, r4; nop; ldtmu0 #/* 00000560: 159e7900 a0020827 */
   mov r1, r4 #/* 00000568: 159e7900 10020867 */
@@ -379,7 +379,7 @@ calc_addresses_block:
 #
 #   Call the exit if the input pointer is zero (end of job marker).
 #*/
-
+fetch_fft_job:
   mov.setf ra3, unif #/* 00000598: 15827d80 100220e7 */
   mov rb3, unif #/* 000005a0: 15827d80 100210e7 */
 
@@ -387,7 +387,7 @@ calc_addresses_block:
 #   Exit if jobs done.
 #*/
 
-  brr.allz -; -, +1056 #// 0x000009e8 #/* 000005a8: 00000420 f00809e7 */
+  brr.allz -, end #// 0x000009e8 #/* 000005a8: 00000420 f00809e7 */
   mov r2, ra8; mov r3, rb8 #/* 000005b0: 95208dbf 100248a3 */
   and.setf -, elem_num, 8; nop #/* 000005b8: 14988dc0 d00229e7 */
   mov ra14, r2; mov.zc r2, r2 >> 8 #/* 000005c0: 959f8492 d002c3a2 */
@@ -457,7 +457,7 @@ calc_addresses_block:
 #   Crunch first round of arithmetic.
 #*/
 
-  brr ra0; -, -592 #// 0x00000550 #/* 00000780: fffffdb0 f0f80027 */
+  brr ra0, fetch_complex_and_iter #// 0x00000550 #/* 00000780: fffffdb0 f0f80027 */
   nop #/* 00000788: 009e7000 100009e7 */
   mov ra27, rb27; mov rb27, ra27 #/* 00000790: 956dbff6 100246db */
   mov ra28, rb28; mov rb28, ra28 #/* 00000798: 9571cff6 1002471c */
@@ -466,7 +466,7 @@ calc_addresses_block:
 #   And second round.
 #*/
 
-  brr ra0; -, -624 #// 0x00000550 #/* 000007a0: fffffd90 f0f80027 */
+  brr ra0, fetch_complex_and_iter #// 0x00000550 #/* 000007a0: fffffd90 f0f80027 */
   nop #/* 000007a8: 009e7000 100009e7 */
   mov ra27, rb27; mov rb27, ra27 #/* 000007b0: 956dbff6 100246db */
   mov ra28, rb28; mov rb28, ra28 #/* 000007b8: 9571cff6 1002471c */
@@ -475,7 +475,7 @@ calc_addresses_block:
 #   Subroutine call to Write2 QPUi
 #*/
 
-  bra ra0; -, ra6+0 #/* 000007c0: 00000000 f0f4c027 */
+  bra ra0, ra6+0 #/* 000007c0: 00000000 f0f4c027 */
   nop #/* 000007c8: 009e7000 100009e7 */
   nop #/* 000007d0: 009e7000 100009e7 */
   nop #/* 000007d8: 009e7000 100009e7 */
@@ -520,7 +520,7 @@ calc_addresses_block:
 #   Crunch third round
 #*/
 
-  brr ra0; -, -920 #// 0x00000550 #/* 000008c8: fffffc68 f0f80027 */
+  brr ra0, fetch_complex_and_iter #// 0x00000550 #/* 000008c8: fffffc68 f0f80027 */
   nop #/* 000008d0: 009e7000 100009e7 */
   mov ra27, rb27; mov rb27, ra27 #/* 000008d8: 956dbff6 100246db */
   mov ra28, rb28; mov rb28, ra28 #/* 000008e0: 9571cff6 1002471c */
@@ -550,7 +550,7 @@ calc_addresses_block:
 #   Crunch fourth round
 #*/
 
-  brr ra0; -, -1112 #// 0x00000550 #/* 00000988: fffffba8 f0f80027 */
+  brr ra0, fetch_complex_and_iter #// 0x00000550 #/* 00000988: fffffba8 f0f80027 */
   nop #/* 00000990: 009e7000 100009e7 */
   mov ra27, rb27; mov rb27, ra27 #/* 00000998: 956dbff6 100246db */
   mov ra28, rb28; mov rb28, ra28 #/* 000009a0: 9571cff6 1002471c */
@@ -559,7 +559,7 @@ calc_addresses_block:
 #   Subroutine call to Write2 QPUi
 #*/
 
-  bra ra0; -, ra6+0 #/* 000009a8: 00000000 f0f4c027 */
+  bra ra0, ra6+0 #/* 000009a8: 00000000 f0f4c027 */
   nop #/* 000009b0: 009e7000 100009e7 */
   nop #/* 000009b8: 009e7000 100009e7 */
   nop #/* 000009c0: 009e7000 100009e7 */
@@ -568,7 +568,7 @@ calc_addresses_block:
 #   Loop around to pick up the next FFT job
 #*/
 
-  brr -; -, -1104 #// 0x00000598 #/* 000009c8: fffffbb0 f0f809e7 */
+  brr -, fetch_fft_job #// 0x00000598 #/* 000009c8: fffffbb0 f0f809e7 */
   nop #/* 000009d0: 009e7000 100009e7 */
   nop #/* 000009d8: 009e7000 100009e7 */
   nop #/* 000009e0: 009e7000 100009e7 */
@@ -577,7 +577,7 @@ calc_addresses_block:
 #   All done, raise an IRQ if QPU0 (rb3 = 1, if QPU0)
 #   End the thread.
 #*/
-
+end:
   mov irq, rb3 #/* 000009e8: 159c3fc0 100209a7 */
   nop; nop; thrend #/* 000009f0: 009e7000 300009e7 */
   nop #/* 000009f8: 009e7000 100009e7 */
