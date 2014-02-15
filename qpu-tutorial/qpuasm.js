@@ -118,7 +118,7 @@ function evaluateExpr(expr, vars) { try { with (vars) return eval(expr); } catch
 
 var error;
 
-function evaluateSrc(src, symbols) {
+function evaluateSrc(src, symbols, error) {
 	if (imm[src] == null) {
 		var value = evaluateExpr(src, symbols);
 		if (value instanceof Error)
@@ -127,6 +127,18 @@ function evaluateSrc(src, symbols) {
 			src = value;
 	}
 	return src;
+}
+
+function evaluateRaPlusOff(line, symbols) {
+    var reg_val_tuple = splitOnFirst(line, "+");
+    if (reg_val_tuple.length > 1 && banka_r[reg_val_tuple[0]] != null) {
+	return [banka_r[reg_val_tuple[0]], evaluateExpr(reg_val_tuple[1],symbols)];
+    } else if (banka_r[line] != null) {
+	return [banka_r[line],0];
+    } else {
+	return [null, evaluateExpr(line,symbols)];
+    }
+
 }
 
 function instructionToParts(x) {
@@ -292,7 +304,12 @@ function assemble(program, options) {
 				if (wb == null) wb = 39;
 				data = evaluateExpr(slots[i][2], symbols);
 				addcc = cc[pred];
-				iword0 = data; iword1 = (op << 28 | 0 << 20 | addcc << 17 | mulcc << 14 | F << 13 | X << 12 | wa << 6 | wb << 0) >>> 0;
+				var magic = 0;
+				if (pred == 'never')
+				    magic = 0x80;
+				iword0 = data; iword1 = (op << 28 | magic << 20 | addcc << 17 | mulcc << 14 | F << 13 | X << 12 | wa << 6 | wb << 0) >>> 0;
+				if (slots.length > 1)
+				    error("Error:ldi doesn't allow additional instruction slots");
 				break;
 			}
 			else if (i==0 && inst == "brr") { // brr.bcc reg, target
@@ -300,7 +317,8 @@ function assemble(program, options) {
 				bracc = bcc[pred];
 				var wa = banka_w[slots[i][1]];
 				if (wa == null) {
-					wb = bankb_w[slots[i][1]];
+					wa = bankb_w[slots[i][1]];
+					X = 1;
 				}
 				if (wa == null && wb == null)
 					error("Error: invalid link register in brr instruction.");
@@ -308,12 +326,22 @@ function assemble(program, options) {
 					wa = 39;
 				if (wb == null)
 					wb = 39;
-				var target = evaluateExpr(slots[i][2], symbols);
+
+				var reg_and_target = evaluateRaPlusOff(slots[i][2], symbols);
+				var target = reg_and_target[1];
 				if (target == null)
 					error("Error: invalid target address in brr instruction.");
 				target -= (_.pc + 8*4);
 				var reg = 0;
-				iword0 = target; iword1 = (op << 28 | bracc << 20 | 1 << 19 | reg << 18 | ra << 13 | F << 12 | wa << 6 | wb << 0) >>> 0;
+				if (reg_and_target[0] != null) {
+				    reg = 1;
+				    ra = reg_and_target[0];
+				} else {
+				    ra = 0; // TODO: Is this the right value for ra if reg == 0? What is ra meaning if reg == 0?
+				}
+				iword0 = target; iword1 = (op << 28 | bracc << 20 | 1 << 19 | reg << 18 | ra << 13 | X << 12 | wa << 6 | wb << 0) >>> 0;
+				if (slots.length > 1)
+				    error("Error: brr doesn't allow additional instruction slots");
 				break;
 			}
 			else if (i==0 && inst == "bra") { // bra.bcc wreg, reg
@@ -329,12 +357,21 @@ function assemble(program, options) {
 					wa = 39;
 				if (wb == null)
 					wb = 39;
-				var ra = banka_r[slots[i][2]];
-				if (ra == null)
-					error("Error: invalid target register in bra instruction.");
-				var reg = 1;
-				target = 0;
+				var reg = 0;
+				var reg_and_target = evaluateRaPlusOff(slots[i][2], symbols);
+				var target = reg_and_target[1];
+				if (target == null)
+					error("Error: invalid target address in bra instruction.");
+				var reg = 0;
+				if (reg_and_target[0] != null) {
+				    reg = 1;
+				    ra = reg_and_target[0];
+				} else {
+				    ra = 0; // TODO: Is this the right value for ra if reg == 0? What is ra meaning if reg == 0?
+				}
 				iword0 = target; iword1 = (op << 28 | bracc << 20 | 0 << 19 | reg << 18 | ra << 13 | F << 12 | wa << 6 | wb << 0) >>> 0;
+				if (slots.length > 1)
+				    error("Error: bra doesn't allow additional instruction slots");
 				break;
 			}
 			if (addop == null) {
@@ -359,7 +396,7 @@ function assemble(program, options) {
 					add_src1 = slots[i][2];
 					if (add_src1 != null && acc_names[add_src1] == null && banka_r[add_src1] == null && bankb_r[add_src1] == null) {
 						// add_src2 is not a acc, ra or rb, now try a small const
-						add_src1 = evaluateSrc(add_src1, symbols);		
+					    add_src1 = evaluateSrc(add_src1, symbols, error);		
 
 						if (imm[add_src1] && rb==null && op==null) {
 							rb = imm[add_src1];
@@ -375,7 +412,7 @@ function assemble(program, options) {
 					if (add_src2 != null && acc_names[add_src2] == null && banka_r[add_src2] == null && bankb_r[add_src2] == null) {
 						// add_src2 is not a acc, ra or rb, now try a small const
 
-						add_src2 = evaluateSrc(add_src2, symbols);
+					    add_src2 = evaluateSrc(add_src2, symbols, error);
 
 						if (imm[add_src2] && ((rb==null && op==null) || (rb==imm[add_src2]) && op==ops['nopi'])) {
 							rb = imm[add_src2];
@@ -407,9 +444,13 @@ function assemble(program, options) {
 					if (mul_dst != null && banka_w[mul_dst] == null && bankb_w[mul_dst] == null)
 						error("Error: invalid destination register in second (mul) slot.");
 					mul_src1 = slots[i][2];
+					if (mul_src1 != null && (mul_src1.search(">>") != -1 || mul_src1.search("<<") != -1)) {
+					    show("WARNING! Rotator not supported yet, will produce garbage!");
+					    mul_src1 = mul_src1.split(">",1)[0].split(" ",0)[0]
+					}
 					if (mul_src1 != null && acc_names[mul_src1] == null && banka_r[mul_src1] == null && bankb_r[mul_src1] == null) {
 						// if its not an immediate as is, try and evaluate expr
-						mul_src1 = evaluateSrc(mul_src1, symbols);
+					    mul_src1 = evaluateSrc(mul_src1, symbols, error);
 
 						if (imm[mul_src1] && ((rb==null && op==null) || (op==ops['nopi'] && rb==imm[mul_src1]))) {
 							rb = imm[mul_src1];
@@ -422,9 +463,13 @@ function assemble(program, options) {
 					mul_src2 = slots[i][3];
 					if (mul_src2 == null)
 						mul_src2 = mul_src1;
+					if (mul_src2 != null && (mul_src2.search(">>") != -1 || mul_src2.search("<<") != -1)) {
+					    show("WARNING! Rotator not supported yet, will produce garbage!");
+					    mul_src2 = mul_src2.split(">",1)[0].split(" ",0)[0]
+					}
 					if (mul_src2 != null && acc_names[mul_src2] == null && banka_r[mul_src2] == null && bankb_r[mul_src2] == null) {
 						// if its not an immediate as is, try and evaluate expr
-						mul_src2 = evaluateSrc(mul_src2, symbols);
+					    mul_src2 = evaluateSrc(mul_src2, symbols, error);
 
 						if ((imm[mul_src2] && rb==null && op==null) || (op==ops['nopi'] && rb==imm[mul_src2])) {
 							rb = imm[mul_src2];
