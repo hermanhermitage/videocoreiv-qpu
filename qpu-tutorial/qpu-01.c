@@ -9,14 +9,7 @@
 #define GPU_MEM_MAP 0x0 // cached=0x0; direct=0x20000000
 
 unsigned int program[] = {
-	0x15827d80, 0x100210e7, //  mov rb3, unif
-	0x009e7000, 0x100009e7, //  nop
-	0x009e7000, 0x100009e7, //  nop
-	0x009e7000, 0x100009e7, //  nop
-	0x159c3fc0, 0x100209a7, //  mov irq, rb3
-	0x009e7000, 0x300009e7, //  nop; nop; thrend
-	0x009e7000, 0x100009e7, //  nop
-	0x009e7000, 0x100009e7  //  nop
+#include "qpu-01.hex"
 };
 
 #define as_gpu_address(x) (unsigned) gpu_pointer + ((void *)x - arm_pointer)
