@@ -114,7 +114,18 @@ function rsplit(s, c) { return [''].concat(s.split(c, 2)).slice(-2); }
 function splitOnFirst(s, c) { var i = s.indexOf(c); return i<0 ? [s] : [s.substring(0, i), s.substring(i+1)]; }
 function trim(s) { return s.trim(); }
 
-function evaluteExpr(expr, vars) { try { with (vars) return eval(expr); } catch(e) {}; }
+function evaluateExpr(expr, vars) { try { with (vars) return eval(expr); } catch(e) { return e; }; }
+
+function evaluateSrc(src, symbols) {
+	if (imm[src] == null) {
+		var value = evaluateExpr(src, symbols);
+		if (value instanceof Error)
+			error("Error: "+e.message+" in '"+src+"'");
+		else
+			src = value;
+	}
+	return src;
+}
 
 function instructionToParts(x) {
 	// "op [arg1 [,arg2 [,arg3]]]" -> [op, arg1, arg2, arg3]
@@ -152,7 +163,7 @@ function assemble(program, options) {
 			var split = splitOnFirst(body, ',');
 			var symbol = split[0];
 			var expr = split[1]; 
-			symbols[symbol] = evaluteExpr(expr, symbols) || 1;
+			symbols[symbol] = evaluateExpr(expr, symbols) || 1;
 			if (options.verbose) {
 				show('/* '+symbol+' = '+symbols[symbol]+' */ /*', ".set "+body, '*/');
 			}
@@ -229,6 +240,9 @@ function assemble(program, options) {
 		// instruction: slot1 [; slot2 [; slot3]]
 		var slots = lineParts[1].split(";").map(instructionToParts);
 
+		if (slots.length > 3)
+			error("Error: instruction has more than 3 slots.");
+
 		//   mulop:3 addop:5 ra:6 rb:6 adda:3 addb:3 mula:3 mulb:3, op:4 packbits:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
 		var mulop, addop, ra, rb, adda, addb, mula, mulb, op, packbits, addcc, mulcc, F, X, wa, wb;
 
@@ -273,7 +287,7 @@ function assemble(program, options) {
 
 				if (wa == null) wa = 39;
 				if (wb == null) wb = 39;
-				data = evaluteExpr(slots[i][2], symbols);
+				data = evaluateExpr(slots[i][2], symbols);
 				addcc = cc[pred];
 				iword0 = data; iword1 = (op << 28 | 0 << 20 | addcc << 17 | mulcc << 14 | F << 13 | X << 12 | wa << 6 | wb << 0) >>> 0;
 				break;
@@ -291,7 +305,7 @@ function assemble(program, options) {
 					wa = 39;
 				if (wb == null)
 					wb = 39;
-				var target = evaluteExpr(slots[i][2], symbols);
+				var target = evaluateExpr(slots[i][2], symbols);
 				if (target == null)
 					error("Error: invalid target address in brr instruction.");
 				target -= (_.pc + 8*4);
@@ -338,21 +352,28 @@ function assemble(program, options) {
 					add_dst = slots[i][1];
 					if (add_dst != null && banka_w[add_dst] == null && bankb_w[add_dst] == null)
 						error("Error: invalid destination register in first (add) slot.");
+
 					add_src1 = slots[i][2];
 					if (add_src1 != null && acc_names[add_src1] == null && banka_r[add_src1] == null && bankb_r[add_src1] == null) {
+						// add_src2 is not a acc, ra or rb, now try a small const
+						add_src1 = evaluateSrc(add_src1, symbols);		
+
 						if (imm[add_src1] && rb==null && op==null) {
 							rb = imm[add_src1];
 							op = ops['nopi'];
 							adda = 7;
 						}
 						else
-							error("Error: invalid first source register in first (add) slot.");
+							error("Error: '"+add_src1+"' is not a valid source in the first (add) slot.");
 					}
 					add_src2 = slots[i][3];
 					if (add_src2 == null)
 						add_src2 = add_src1;
 					if (add_src2 != null && acc_names[add_src2] == null && banka_r[add_src2] == null && bankb_r[add_src2] == null) {
 						// add_src2 is not a acc, ra or rb, now try a small const
+
+						add_src2 = evaluateSrc(add_src2, symbols);
+
 						if (imm[add_src2] && ((rb==null && op==null) || (rb==imm[add_src2]) && op==ops['nopi'])) {
 							rb = imm[add_src2];
 							op = ops['nopi'];	
@@ -384,6 +405,9 @@ function assemble(program, options) {
 						error("Error: invalid destination register in second (mul) slot.");
 					mul_src1 = slots[i][2];
 					if (mul_src1 != null && acc_names[mul_src1] == null && banka_r[mul_src1] == null && bankb_r[mul_src1] == null) {
+						// if its not an immediate as is, try and evaluate expr
+						mul_src1 = evaluateSrc(mul_src1, symbols);
+
 						if (imm[mul_src1] && ((rb==null && op==null) || (op==ops['nopi'] && rb==imm[mul_src1]))) {
 							rb = imm[mul_src1];
 							op = ops['nopi'];
@@ -396,6 +420,9 @@ function assemble(program, options) {
 					if (mul_src2 == null)
 						mul_src2 = mul_src1;
 					if (mul_src2 != null && acc_names[mul_src2] == null && banka_r[mul_src2] == null && bankb_r[mul_src2] == null) {
+						// if its not an immediate as is, try and evaluate expr
+						mul_src2 = evaluateSrc(mul_src2, symbols);
+
 						if ((imm[mul_src2] && rb==null && op==null) || (op==ops['nopi'] && rb==imm[mul_src2])) {
 							rb = imm[mul_src2];
 							op = ops['nopi'];
