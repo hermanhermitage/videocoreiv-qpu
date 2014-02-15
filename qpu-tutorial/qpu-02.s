@@ -2,31 +2,36 @@
 .set vw_setup0, function vw_setup0(x, y) { return (2<<30|y<<23|x<<16); } vw_setup0
 .set vw_setup1, function vw_setup1(x, y) { return (3<<30|x<<16|y); } vw_setup1
 
-# Determine if this QPU will signal on completion (flag is from uniforms)
-mov rb3, unif
+.global entry
+.global exit
 
-# Configure access to vpm
-ldi vw_setup, vw_layout(1, 1)
+entry:
+	# Determine if this QPU will signal on completion (flag is from uniforms)
+	mov rb3, unif
 
-# Write 5x16 words into vpm
-mov vpm, 1
-mov vpm, 2
-mov vpm, 4
-mov vpm, 8
-mov vpm, elem_num
+	# Configure access to vpm
+	ldi vw_setup, vw_layout(1, 1)
 
-# Configure vpm write to memory
-ldi vw_setup, vw_setup0(5, 16)
-ldi vw_setup, vw_setup1(0, 0)
+	# Write 5x16 words into vpm
+	mov vpm, 1
+	mov vpm, 2
+	mov vpm, 4
+	mov vpm, 8
+	mov vpm, elem_num
 
-# Trigger transfer to destination in memory (address is from uniforms)
-nop; mov vw_addr, unif
+	# Configure vpm write to memory
+	ldi vw_setup, vw_setup0(5, 16)
+	ldi vw_setup, vw_setup1(0, 0)
 
-# Wait for vpm transfer to finish
-mov.never -, vw_wait
+	# Trigger transfer to destination in memory (address is from uniforms)
+	nop; mov vw_addr, unif
 
-# Signal done
-mov irq, rb3
-nop; nop; thrend
-nop
-nop
+	# Wait for vpm transfer to finish
+	mov.never -, vw_wait
+
+exit:
+	# Signal done
+	mov irq, rb3
+	nop; nop; thrend
+	nop
+	nop
