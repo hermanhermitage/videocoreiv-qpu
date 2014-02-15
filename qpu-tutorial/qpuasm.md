@@ -4,37 +4,44 @@ It needs Node.js to run (will target web page later).
 
 NOTE: Rotator and Pack/Unpack are not yet supported.
 
-Usage:
+#### Usage:
+```
   node[js] qpuasm.js [--showbits] [--dumpglobals] [--dumpsymbols] [--verbose] [--in]filename
-  
-Source Syntax:
-  {[label:] [instruction/directive] [# comment] LF}
+```
 
-Instructions:
-  [addop] [; mulop] [; op]
+#### Source Syntax:
+```
+  {[label:] [instruction/directive] [# comment] LF}
+```
+
+#### Instructions:
+```
+[addop] [; mulop] [; op]
   
 Where addop, mulop and op are:
-  op [dest [, src1 [, src2]]
+  op [dst [, src1 [, src2]]
 
 addop:
-  nop, fadd, fsub, fmin, fmax, fminabs, fmaxabs, ftoi, itof, add, sub, shr, asr,                                                                                                                                                          
+  nop, fadd, fsub, fmin, fmax, fminabs, fmaxabs, ftoi, itof, add, sub, shr, asr
   ror, shl, min", max, and, or, xor, not, clz, v8adds, v8subs, mov
   
 mulop:
   nop, fmul, mul24, v8muld, v8min, v8max, v8adds, v8subs, mov
-
-op:
-  bkpt, nop, thrsw, thrend, sbwait, sbdone, lthrsw, loadcv, loadc, ldcend, ldtmu0, ldtmu1, loadam, ldi, bra, brr
   
-And dest, src1, src2 are:
+op:
+  bkpt, nop, thrsw, thrend, sbwait, sbdone, lthrsw, loadcv, loadc, ldcend, ldtmu0, ldtmu1, loadam, 
+  ldi, bra, brr
+  
+dst, src1, src2:
   a register reference: r0...r5 or ra0...ra63, or rb0...rb63, or special reg (vpm, unif, ...).
   a small constant
- 
+  
 Directives:
   .set    symbol, jsexpr
   .global symbol
-  
-Example.
+```
+
+#### Example.
 
 ```
 nodejs qpuasm.js qpu-02.s
