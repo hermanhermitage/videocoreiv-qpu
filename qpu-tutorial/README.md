@@ -9,6 +9,10 @@ Some sample QPU programs for getting started.
 * [qpu-01.c](qpu-01.c) Almost empty program that signals completion.
 * [qpu-02.c](qpu-02.c) VPM writes and transfer of VPM to memory (sdram).
 
+### Assembler:
+
+A basic assembler [qpuasm.js](qpuasm.js) written in javascript is described in [qpuasm.md](qpuasm.md).
+
 ### Glossary:
 
 * QPU - 16 way SIMD with add and multiply floating point units.
