@@ -3,6 +3,9 @@
 
 #include "qpudis.h"
 
+int base;
+int showfields = 0;
+
 const char *acc_names[] = {
 	"r0", "r1", "r2", "r3", "r4", "r5"
 };
@@ -34,7 +37,7 @@ const char *banka_w[64] = {
 	"ra8", "ra9", "ra10", "ra11", "ra12", "ra13", "ra14", "w",
 	"ra16", "ra17", "ra18", "ra19", "ra20", "ra21", "ra22", "ra23",
 	"ra24", "ra25", "ra26", "ra27", "ra28", "ra29", "ra30", "ra31",
-	"r0", "r1", "r2", "r3", "tmurs", "r5quad", "irq", "nop",
+	"r0", "r1", "r2", "r3", "tmurs", "r5quad", "irq", "-",
 	"unif_addr", "x_coord", "ms_mask", "stencil", "tlbz", "tlbm", "tlbc", "tlbam",
 	"vpm", "vr_setup", "vr_addr", "mutex", "recip", "recipsqrt", "exp", "log",
 	"t0s", "t0t", "t0r", "t0b", "t1s", "t1t", "t1r", "t1b",
@@ -45,7 +48,7 @@ const char *bankb_w[64] = {
 	"rb8", "rb9", "rb10", "rb11", "rb12", "rb13", "rb14", "w?",
 	"rb16", "rb17", "rb18", "rb19", "rb20", "rb21", "rb22", "rb23",
 	"rb24", "rb25", "rb26", "rb27", "rb28", "rb29", "rb30", "rb31",
-	"r0", "r1", "r2", "r3", "tmurs", "r5rep", "irq", "nop",
+	"r0", "r1", "r2", "r3", "tmurs", "r5rep", "irq", "-",
 	"unif_addr", "y_coord", "rev_flag", "stencil", "tlbz", "tlbm", "tlbc", "tlbam",
 	"vpm", "vw_setup", "vw_addr", "mutex", "recip", "recipsqrt", "exp", "log",
 	"t0s", "t0t", "t0r", "t0b", "t1s", "t1t", "t1r", "t1b",
@@ -103,8 +106,8 @@ const char *imm[] = {
 	"-8", "-7", "-6", "-5", "-4", "-3", "-2", "-1",
 	"1.0", "2.0", "4.0", "8.0", "16.0", "32.0", "64.0", "128.0",
 	"1/256", "1/128", "1/64", "1/32", "1/16", "1/8", "1/4", "1/2", 
-	"? >> r5", "? >> 1", "? >> 2", "? >> 3", "? >> 4", "? >> 5", "? >> 6", "? >> 7",
-	"? >> 8", "? >> 9", "? >> 10", "? >> 11", "? >> 12", "? >> 13", "? >> 14", "? >> 15"
+	" >> r5", " >> 1", " >> 2", " >> 3", " >> 4", " >> 5", " >> 6", " >> 7",
+	" >> 8", " >> 9", " >> 10", " >> 11", " >> 12", " >> 13", " >> 14", " >> 15"
 };
 
 const char *setf[] = {
@@ -122,11 +125,33 @@ const char *setf[] = {
 // 32 Bit Immediates:
 //   data:32, 1110 unknown:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
 
-const char *qpu_r(uint32_t ra, uint32_t rb, uint32_t adda, uint32_t op) {
+unsigned tmpthis=0;
+unsigned tmpnext=0;
+char tmpbuff[256];
+#define tmpalloc(sizebytes) ( tmpthis = tmpnext+sizebytes > sizeof(tmp) ? 0 : tmpnext, tmpnext = (tmpthis+sizebytes), &tmpbuff[tmpthis])
+
+const char *qpu_r(uint32_t ra, uint32_t rb, uint32_t adda, uint32_t op, int rotator) {
+
 	if (op == 13) {
-		//todo: fix immediate shifts
-		if (adda==6) return adda<48 ? imm[rb] : imm[rb];
-		if (adda==7) return "?";
+		if (rb<48) {
+			if (adda==6) return banka_r[ra];
+			if (adda==7) return imm[rb];
+		}
+		else {
+			if ((adda<6) && rotator) {
+				char *tmp = tmpalloc(32);
+				sprintf(tmp, "%s%s", acc_names[adda], imm[rb]);
+				return tmp;
+			}
+			if ((adda==6) && rotator) {
+				char *tmp = tmpalloc(32);
+				sprintf(tmp, "%s%s", banka_r[ra], imm[rb]);
+				return tmp;
+			}
+			if ((adda==7) && rotator) {
+				return "err?";
+			}
+		}
 	}
 
 	if (adda==6) return banka_r[ra];
@@ -164,7 +189,7 @@ void show_qpu_add_mul(uint32_t i0, uint32_t i1)
 	uint32_t wa    = (i1 >> 6) & 0x3f;
 	uint32_t wb    = (i1 >> 0) & 0x3f;
 
-	if (0) {
+	if (showfields) {
 		printf("mulop=%d, addop=%d, ra=%d, rb=%d, adda=%d, addb=%d, mula=%d, mulb=%d, op=%d, unpacking=%d, packmul=%d, packing=%d, addcc=%d, mulcc=%d, F=%d, X=%d, wa=%d, wb=%d  ",
 			mulop, addop, ra, rb, adda, addb, mula, mulb, op, unpacking, packmul, packing, addcc, mulcc, F, X, wa, wb);
 	}
@@ -199,7 +224,7 @@ void show_qpu_add_mul(uint32_t i0, uint32_t i1)
 
 	// add op always
 	printf("%s%s%s", addops[addop], cc[addcc], setf[addF]);
-	printf(args[arity], qpu_w_add(wa, X), dstpackadd[addpack], qpu_r(ra, rb, adda, op), "", qpu_r(ra, rb, addb, op), srcunpackadd[addunpack]);
+	printf(args[arity], qpu_w_add(wa, X), dstpackadd[addpack], qpu_r(ra, rb, adda, op, 0), arity==2?srcunpackadd[addunpack]:"", qpu_r(ra, rb, addb, op, 0), srcunpackadd[addunpack]);
 
 	// show mul op if non nop or control op is non nop
         if (mulop || (op != 1)) {
@@ -216,9 +241,9 @@ void show_qpu_add_mul(uint32_t i0, uint32_t i1)
 
 		printf("; %s%s%s", mulops[mulop], cc[mulcc], setf[mulF]);
 		if (packmul || (X==0))
-			printf(args[arity], qpu_w_mul(wb, X), dstpackmul[mulpack], qpu_r(ra, rb, mula, op), "", qpu_r(ra, rb, mulb, op), srcunpackmul[mulunpack]);
+			printf(args[arity], qpu_w_mul(wb, X), dstpackmul[mulpack], qpu_r(ra, rb, mula, op, 1), arity==2?srcunpackmul[mulunpack]:"", qpu_r(ra, rb, mulb, op, 1), srcunpackmul[mulunpack]);
 		else {
-			printf(args[arity], qpu_w_mul(wb, X), dstpackadd[mulpack], qpu_r(ra, rb, mula, op), "", qpu_r(ra, rb, mulb, op), srcunpackadd[mulunpack]);
+			printf(args[arity], qpu_w_mul(wb, X), dstpackadd[mulpack], qpu_r(ra, rb, mula, op, 1), arity==2?srcunpackadd[mulunpack]:"", qpu_r(ra, rb, mulb, op, 1), srcunpackadd[mulunpack]);
 		}
 	}
 
@@ -241,8 +266,22 @@ void show_qpu_branch(uint32_t i0, uint32_t i1)
 	uint32_t X        = (i1 >> 12) & 0x01;
 	uint32_t wa       = (i1 >>  6) & 0x3f;
 	uint32_t wb       = (i1 >>  0) & 0x3f;
-	printf("branch addr=0x%08x, unknown=%x, cond=%02d, pcrel=%x, addreg=%x, ra=%02d, X=%x, wa=%02d, wb=%02x\n",
+
+	if (showfields) {
+		printf("branch addr=0x%08x, unknown=%x, cond=%02d, pcrel=%x, addreg=%x, ra=%02d, X=%x, wa=%02d, wb=%02x\n",
 			addr, unknown, cond, pcrel, addreg, ra, X, wa, wb);
+	}
+	// branch: b[link][cc] [linkreg,] [basedreg,]
+	printf("%s%s %s; %s, %s%+d",
+		pcrel ? "brr" : "bra",
+		bcc[cond],
+		qpu_w_add(wa, X),
+		qpu_w_mul(wb, X),
+		addreg ? qpu_r(ra, ra, 6, (i1 >> 28)&0xf, 0) : "",
+		addr);
+	if (!addreg) printf(" // 0x%08x", base+addr+8*4);
+	printf("\n");
+
 }
 
 void show_qpu_imm32(uint32_t i0, uint32_t i1)
@@ -255,8 +294,21 @@ void show_qpu_imm32(uint32_t i0, uint32_t i1)
 	uint32_t X       = (i1 >> 12) & 0x01;
 	uint32_t wa      = (i1 >>  6) & 0x3f;
 	uint32_t wb      = (i1 >>  0) & 0x3f;
-	printf("imm32 data=0x%08x, unknown=0x%02x, addcc=%x, mulcc=%x, F=%x, X=%x, wa=%02d, wb=%02d\n",
+
+	if (showfields) {
+		printf("imm32 data=0x%08x, unknown=0x%02x, addcc=%x, mulcc=%x, F=%x, X=%x, wa=%02d, wb=%02d\n",
 			data, unknown, addcc, mulcc, F, X, wa, wb);
+	}
+
+	// addop: op[cc][setf] rd[.pack?], immediate
+	printf("%s%s%s %s, 0x%08x", ops[(i1 >> 28) &0xf], cc[addcc], setf[F], qpu_w_add(wa, X), data);
+
+	// mulop: [op[cc][setf] rd[.pack?], immediate
+	if (mulcc) {
+		printf("; %s%s%s %s, 0x%08x", ops[(i1 >> 28) &0xf], cc[mulcc], setf[F], qpu_w_mul(wb, X), data);
+	}
+
+	printf("\n");
 }
 
 void show_qpu_inst(uint32_t *inst) {
@@ -272,7 +324,8 @@ void show_qpu_inst(uint32_t *inst) {
 void show_qpu_fragment(uint32_t *inst, int length) {
 	uint32_t i = 0;
 	for(;i<length; i+=2) {
-		printf("%08x: %08x %08x ", i, inst[i], inst[i+1]); show_qpu_inst(&inst[i]);
+		base = i*4;
+		printf("/* %08x: %08x %08x */  ", i*4, inst[i], inst[i+1]); show_qpu_inst(&inst[i]);
 	}
 	printf("\n");
 }
