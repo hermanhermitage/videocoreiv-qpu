@@ -127,6 +127,18 @@ function evaluateSrc(src, symbols, error) {
 	return src;
 }
 
+function evaluateRaPlusOff(line, symbols) {
+    var reg_val_tuple = splitOnFirst(line, "+");
+    if (reg_val_tuple.length > 1 && banka_r[reg_val_tuple[0]] != null) {
+	return [banka_r[reg_val_tuple[0]], evaluateExpr(reg_val_tuple[1],symbols)];
+    } else if (banka_r[line] != null) {
+	return [banka_r[line],0];
+    } else {
+	return [null, evaluateExpr(line,symbols)];
+    }
+
+}
+
 function instructionToParts(x) {
 	// "op [arg1 [,arg2 [,arg3]]]" -> [op, arg1, arg2, arg3]
 
@@ -307,11 +319,19 @@ function assemble(program, options) {
 					wa = 39;
 				if (wb == null)
 					wb = 39;
-				var target = evaluateExpr(slots[i][2], symbols);
+
+				var reg_and_target = evaluateRaPlusOff(slots[i][2], symbols);
+				var target = reg_and_target[1];
 				if (target == null)
 					error("Error: invalid target address in brr instruction.");
 				target -= (_.pc + 8*4);
 				var reg = 0;
+				if (reg_and_target[0] != null) {
+				    reg = 1;
+				    ra = reg_and_target[0];
+				} else {
+				    ra = 0; // TODO: Is this the right value for ra if reg == 0? What is ra meaning if reg == 0?
+				}
 				iword0 = target; iword1 = (op << 28 | bracc << 20 | 1 << 19 | reg << 18 | ra << 13 | F << 12 | wa << 6 | wb << 0) >>> 0;
 				if (slots.length > 1)
 				    error("Error: brr doesn't allow additional instruction slots");
@@ -330,11 +350,18 @@ function assemble(program, options) {
 					wa = 39;
 				if (wb == null)
 					wb = 39;
-				var ra = banka_r[slots[i][2]];
-				if (ra == null)
-					error("Error: invalid target register in bra instruction.");
-				var reg = 1;
-				target = 0;
+				var reg = 0;
+				var reg_and_target = evaluateRaPlusOff(slots[i][2], symbols);
+				var target = reg_and_target[1];
+				if (target == null)
+					error("Error: invalid target address in bra instruction.");
+				var reg = 0;
+				if (reg_and_target[0] != null) {
+				    reg = 1;
+				    ra = reg_and_target[0];
+				} else {
+				    ra = 0; // TODO: Is this the right value for ra if reg == 0? What is ra meaning if reg == 0?
+				}
 				iword0 = target; iword1 = (op << 28 | bracc << 20 | 0 << 19 | reg << 18 | ra << 13 | F << 12 | wa << 6 | wb << 0) >>> 0;
 				if (slots.length > 1)
 				    error("Error: bra doesn't allow additional instruction slots");
