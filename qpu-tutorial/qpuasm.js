@@ -301,7 +301,10 @@ function assemble(program, options) {
 				if (wb == null) wb = 39;
 				data = evaluateExpr(slots[i][2], symbols);
 				addcc = cc[pred];
-				iword0 = data; iword1 = (op << 28 | 0 << 20 | addcc << 17 | mulcc << 14 | F << 13 | X << 12 | wa << 6 | wb << 0) >>> 0;
+				var magic = 0;
+				if (pred == 'never')
+				    magic = 0x80;
+				iword0 = data; iword1 = (op << 28 | magic << 20 | addcc << 17 | mulcc << 14 | F << 13 | X << 12 | wa << 6 | wb << 0) >>> 0;
 				if (slots.length > 1)
 				    error("Error:ldi doesn't allow additional instruction slots");
 				break;
