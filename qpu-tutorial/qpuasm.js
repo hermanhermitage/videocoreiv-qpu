@@ -138,6 +138,9 @@ function evaluateRaPlusOff(line, symbols) {
     } else if (banka_r[line] != null) {
 	return [banka_r[line], 0];
     } else {
+	// If its just a simple +const or -const offset by pc to allow brr -, +128 (rel) etc to be treated differentely to brr -, 124 (abs)
+	if (isFinite(Number(line)))
+		return [null, ((line.trim().indexOf("+")==0 || line.trim().indexOf("-")==0) ? symbols._.pc + 4*8 : 0) + Number(line)];
 	return [null, evaluateExpr(line,symbols)];
     }
 
