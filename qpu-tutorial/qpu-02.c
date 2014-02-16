@@ -13,34 +13,7 @@
 #define vw_setup1(x,y) (3<<30|(x)<<16|(y))
 
 unsigned int program[] = {
-	// Determine if this QPU will signal on completion (flag is from uniforms)
-	0x15827d80, 0x100210e7, //  mov rb3, unif
-
-	// Configure access to vpm
-        vpm_layout(1, 1, 0), 0xe0021c67, // ldi vw_setup, vpm_layout(1, 1, 0)
-
-	// Write 5x16 words into vpm
-	0x00000001, 0xe00049f0, // nop; mov vpm, 1
-	0x00000002, 0xe00049f0, // nop; mov vpm, 2
-	0x00000004, 0xe00049f0, // nop; mov vpm, 4
-	0x00000008, 0xe00049f0, // nop; mov vpm, 8
-	0x159a7dbf, 0x10020c27, // mov vpm, elem_num
-
-	// Configure vpm write to memory
-	vw_setup0(5, 16), 0xe0021c67,// ldi vw_setup, vw_setup0(5, 16)
-	vw_setup1(0, 0), 0xe0021c67, // ldi vw_setup, vw_setup1(0, 0)
-
-	// Trigger transfer to destination in memory (address is from uniforms)
-	0x80827036, 0x100049f2, // nop; mov vw_addr, unif
-	
-	// Wait for vpm transfer to finish
-	0x159f2fc0, 0x100009e7, // mov.never -, vw_wait
-
-	// Signal done
-	0x159c3fc0, 0x100209a7, //  mov irq, rb3
-	0x009e7000, 0x300009e7, //  nop; nop; thrend
-	0x009e7000, 0x100009e7, //  nop
-	0x009e7000, 0x100009e7  //  nop
+#include "qpu-02.hex"
 };
 
 #define as_gpu_address(x) (unsigned) gpu_pointer + ((void *)x - arm_pointer)
@@ -96,17 +69,21 @@ int main(int argc, char *argv[]) {
 
 	/* Build Uniforms */
 	unsigned *qpu_uniform = p;
-	*p++ = 1;
-	*p++ = (unsigned)(gpu_pointer+2048);
+	int i;
+	for (i = 0; i < GPU_QPUS; ++i) {
+	  *p++ = 1;
+	  *p++ = (unsigned)(gpu_pointer+2048+i*16*6*4);
+	}
 	
 	/* Build QPU Launch messages */
 	unsigned *qpu_msg = p;
-	*p++ = as_gpu_address(qpu_uniform);
-	*p++ = as_gpu_address(qpu_code);
+	for (i = 0; i < GPU_QPUS; ++i) {
+	  *p++ = as_gpu_address(qpu_uniform+i*4*2);
+	  *p++ = as_gpu_address(qpu_code);
+	}
 
 	// Test buffer
 	printf("before:");
-	int i;
 	for (i=0; i<size/4; i++) {
 		if ((i%8)==0) printf("\n%08x:", gpu_pointer+i*4);
 		printf(" %08x", ((unsigned *)arm_pointer)[i]);
