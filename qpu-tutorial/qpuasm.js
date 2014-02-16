@@ -398,7 +398,7 @@ function assemble(program, options) {
 						// add_src2 is not a acc, ra or rb, now try a small const
 					    add_src1 = evaluateSrc(add_src1, symbols, error);		
 
-						if (imm[add_src1] && rb==null && op==null) {
+						if (imm[add_src1]!=null && rb==null && op==null) {
 							rb = imm[add_src1];
 							op = ops['nopi'];
 							adda = 7;
@@ -414,7 +414,7 @@ function assemble(program, options) {
 
 					    add_src2 = evaluateSrc(add_src2, symbols, error);
 
-						if (imm[add_src2] && ((rb==null && op==null) || (rb==imm[add_src2]) && op==ops['nopi'])) {
+						if (imm[add_src2]!=null && ((rb==null && op==null) || (rb==imm[add_src2]) && op==ops['nopi'])) {
 							rb = imm[add_src2];
 							op = ops['nopi'];	
 							addb = 7;			
@@ -452,7 +452,7 @@ function assemble(program, options) {
 						// if its not an immediate as is, try and evaluate expr
 					    mul_src1 = evaluateSrc(mul_src1, symbols, error);
 
-						if (imm[mul_src1] && ((rb==null && op==null) || (op==ops['nopi'] && rb==imm[mul_src1]))) {
+						if (imm[mul_src1]!=null && ((rb==null && op==null) || (op==ops['nopi'] && rb==imm[mul_src1]))) {
 							rb = imm[mul_src1];
 							op = ops['nopi'];
 							mula = 7;
@@ -471,7 +471,7 @@ function assemble(program, options) {
 						// if its not an immediate as is, try and evaluate expr
 					    mul_src2 = evaluateSrc(mul_src2, symbols, error);
 
-						if ((imm[mul_src2] && rb==null && op==null) || (op==ops['nopi'] && rb==imm[mul_src2])) {
+						if ((imm[mul_src2]!=null && rb==null && op==null) || (op==ops['nopi'] && rb==imm[mul_src2])) {
 							rb = imm[mul_src2];
 							op = ops['nopi'];
 							mulb = 7;
