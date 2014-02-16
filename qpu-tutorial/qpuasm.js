@@ -141,6 +141,29 @@ function evaluateRaPlusOff(line, symbols) {
 
 }
 
+function fromQpuVector(vector) {
+
+	var bits;
+
+	if (vector.length != 16)
+		error("Error: vector must have 16 values.");
+	var min = 3;
+	var max = -2;
+	for (var i=0; i<16; i++) {
+		min = Math.min(min, vector[i]);
+		max = Math.max(max, vector[i]);
+		if (!isNumber(vector[i]) || Math.floor(vector[i]) != vector[i])
+			error("Error: vector must contain only integers between 0..3 or -2..1");
+		bits |= ((vector[i] & 0x3) & 0x1) << i;
+		bits |= ((vector[i] & 0x3) & 0x2) << (16+i-1);
+	}
+
+	if ((min<0 || max>3) && (min<-2 || max>1))
+		error("Error: vector must contain only integers between 0..3 or -2..1");
+	
+	return [bits, min < 0 ? 0x20 : 0x60];	
+}
+
 function instructionToParts(x) {
 	// "op [arg1 [,arg2 [,arg3]]]" -> [op, arg1, arg2, arg3]
 
@@ -303,10 +326,15 @@ function assemble(program, options) {
 				if (wa == null) wa = 39;
 				if (wb == null) wb = 39;
 				data = evaluateExpr(slots[i][2], symbols);
-				addcc = cc[pred];
 				var magic = 0;
+				if (Array.isArray(data)) {
+					var pair = fromQpuVector(data);
+					data = pair[0];
+					magic = pair[1];	
+				}
+				addcc = cc[pred];
 				if (pred == 'never')
-				    magic = 0x80;
+				    magic |= 0x80;
 				iword0 = data; iword1 = (op << 28 | magic << 20 | addcc << 17 | mulcc << 14 | F << 13 | X << 12 | wa << 6 | wb << 0) >>> 0;
 				if (slots.length > 1)
 				    error("Error:ldi doesn't allow additional instruction slots");
