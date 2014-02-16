@@ -74,7 +74,7 @@ var ops = mkEnum([
 
 var arity = mkReverseMap({
 	0: ["bkpt", "nop", "thrsw", "thrend", "sbwait", "sbdone", "lthrsw", "loadcv", "loadc", "ldcend", "ldtmu0", "ldtmu1", "loadam"],
-	2: ["itof", "ftoi", "clz", "mov"],
+	2: ["itof", "ftoi", "not", "clz", "mov"],
 });
 
 function instructionArgumentCount(x) {
@@ -511,7 +511,7 @@ function assemble(program, options) {
 						error("Error: invalid destination register in second (mul) slot.");
 
 					mul_src1 = slots[i][2];
-					if (typeof(mul_src1) == "string" && (mul_src1.search(">>") != -1 || mul_src1.search("<<") != -1)) {
+					if (typeof(mul_src1) == "string" && (mul_src1.search(">>") != -1 /*todo: || mul_src1.search("<<") != -1*/)) {
 						var reg_and_rotation = mul_src1.split(">>");
 						mul_src1 = reg_and_rotation[0].trim();
 						mul_src1_rotator = reg_and_rotation[1].trim()=="r5" ? "r5" : evaluateExpr(reg_and_rotation[1], symbols);
@@ -534,7 +534,7 @@ function assemble(program, options) {
 						mul_src2 = mul_src1;
 						mul_src2_rotator = mul_src1_rotator;
 					}
-					if (typeof(mul_src2) == "string" && (mul_src2.search(">>") != -1 || mul_src2.search("<<") != -1)) {
+					if (typeof(mul_src2) == "string" && (mul_src2.search(">>") != -1 /*todo: || mul_src2.search("<<") != -1*/)) {
 						var reg_and_rotation = mul_src2.split(">>");
 						mul_src2 = reg_and_rotation[0].trim();
 						mul_src2_rotator = reg_and_rotation[1].trim()=="r5" ? "r5" : evaluateExpr(reg_and_rotation[1], symbols);
