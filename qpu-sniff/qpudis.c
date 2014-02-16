@@ -272,13 +272,13 @@ void show_qpu_branch(uint32_t i0, uint32_t i1)
 			addr, unknown, cond, pcrel, addreg, ra, X, wa, wb);
 	}
 	// branch: b[link][cc] [linkreg,] [basedreg,]
-	printf("%s%s %s; %s, %s%+d",
-		pcrel ? "brr" : "bra",
-		bcc[cond],
-		qpu_w_add(wa, X),
-		qpu_w_mul(wb, X),
-		addreg ? qpu_r(ra, ra, 6, (i1 >> 28)&0xf, 0) : "",
-		addr);
+	if (wa==39) 
+		printf("%s%s %s, %s%+d", pcrel ? "brr" : "bra", bcc[cond], qpu_w_mul(wb, X), addreg ? qpu_r(ra, ra, 6, (i1 >> 28)&0xf, 0) : "", addr);
+	else if (wb==39)
+		printf("%s%s %s, %s%+d", pcrel ? "brr" : "bra", bcc[cond], qpu_w_add(wa, X), addreg ? qpu_r(ra, ra, 6, (i1 >> 28)&0xf, 0) : "", addr);
+	else 
+		printf("%s%s %s, %s, %s%+d", pcrel ? "brr" : "bra", bcc[cond], qpu_w_add(wa, X), qpu_w_mul(wb, X), addreg ? qpu_r(ra, ra, 6, (i1 >> 28)&0xf, 0) : "", addr);
+	
 	if (!addreg) printf(" // 0x%08x", base+addr+8*4);
 	printf("\n");
 
