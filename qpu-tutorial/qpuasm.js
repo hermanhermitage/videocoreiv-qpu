@@ -96,10 +96,10 @@ var imm = mkEnum([
         "-16", "-15", "-14", "-13", "-12", "-11", "-10", "-9",
         "-8", "-7", "-6", "-5", "-4", "-3", "-2", "-1",
         "1.0", "2.0", "4.0", "8.0", "16.0", "32.0", "64.0", "128.0",
-        1/256, 1/128, 1/64, 1/32, 1/16, 1/8, 1/4, 1/2
-	
-        //" >> r5", " >> 1", " >> 2", " >> 3", " >> 4", " >> 5", " >> 6", " >> 7",
-        //" >> 8", " >> 9", " >> 10", " >> 11", " >> 12", " >> 13", " >> 14", " >> 15"
+        1/256, 1/128, 1/64, 1/32, 1/16, 1/8, 1/4, 1/2,
+	// are the rotators ok here? will they collide with a constant imm lookup
+        " >> r5", " >> 1", " >> 2", " >> 3", " >> 4", " >> 5", " >> 6", " >> 7",
+        " >> 8", " >> 9", " >> 10", " >> 11", " >> 12", " >> 13", " >> 14", " >> 15"
 ]);
 
 function mkReverseMap(o) { var r={}; for (var k in o) { if (Array.isArray(o[k])) o[k].forEach(function(v){ r[v] = k; }); else r[o[k]] = k; } return r; }
@@ -114,7 +114,9 @@ function rsplit(s, c) { return [''].concat(s.split(c, 2)).slice(-2); }
 function splitOnFirst(s, c) { var i = s.indexOf(c); return i<0 ? [s] : [s.substring(0, i), s.substring(i+1)]; }
 function trim(s) { return s.trim(); }
 
-function evaluateExpr(expr, vars) { try { with (vars) return eval(expr); } catch(e) { return e; }; }
+function evaluateExpr(expr, vars) { try { with (vars) return eval(expr); } catch(e) { error("Error: "+e.message+" in '"+expr+"'"); return e; }; }
+
+var error;
 
 function evaluateSrc(src, symbols, error) {
 	if (imm[src] == null) {
@@ -128,15 +130,40 @@ function evaluateSrc(src, symbols, error) {
 }
 
 function evaluateRaPlusOff(line, symbols) {
+// todo: absolute: br 0x100, br expr,
+// todo: relative: br +0x100, br -0x100, ra+expr, ra-expr 
     var reg_val_tuple = splitOnFirst(line, "+");
     if (reg_val_tuple.length > 1 && banka_r[reg_val_tuple[0]] != null) {
 	return [banka_r[reg_val_tuple[0]], evaluateExpr(reg_val_tuple[1],symbols)];
     } else if (banka_r[line] != null) {
-	return [banka_r[line],0];
+	return [banka_r[line], 0];
     } else {
 	return [null, evaluateExpr(line,symbols)];
     }
 
+}
+
+function fromQpuVector(vector) {
+
+	var bits;
+
+	if (vector.length != 16)
+		error("Error: vector must have 16 values.");
+	var min = 3;
+	var max = -2;
+	for (var i=0; i<16; i++) {
+		min = Math.min(min, vector[i]);
+		max = Math.max(max, vector[i]);
+		if (!isNumber(vector[i]) || Math.floor(vector[i]) != vector[i])
+			error("Error: vector must contain only integers between 0..3 or -2..1");
+		bits |= ((vector[i] & 0x3) & 0x1) << i;
+		bits |= ((vector[i] & 0x3) & 0x2) << (16+i-1);
+	}
+
+	if ((min<0 || max>3) && (min<-2 || max>1))
+		error("Error: vector must contain only integers between 0..3 or -2..1");
+	
+	return [bits, min < 0 ? 0x20 : 0x60];	
 }
 
 function instructionToParts(x) {
@@ -197,14 +224,16 @@ function assemble(program, options) {
 	for (var pass=0; pass<2; pass++) {
 
 	var show = pass!=1 ? nothing : console.log;
-	var error = pass!=1 ? nothing : function() {
+	error = pass!=1 ? nothing : function() {
 		var util = require('util');
+		console.log(options.in+':'+linenumber);
 		console.log(util.format.apply(this, arguments));
-		process.exit(-1);
+		if (!options['ignore-errors']) process.exit(-1);
 	};
 
 	_.pc = options.targetaddress || 0;
 	var linenumber = 0;
+	var blockcomment = false;
 
 	// Dump global symbols
 	if (pass==1) {
@@ -221,10 +250,41 @@ function assemble(program, options) {
 
 	program.split('\n').forEach(function(line){
 
+		var chkaddr, chk0, chk1;
 		linenumber++;
 
-		// [labelname:] [instruction | directive] [# comment]
-		var lineParts = rsplit(line.split('#', 1)[0], ':');
+		// Ignore lines if still in a C style block comment
+		if (blockcomment) {
+			if (line.indexOf('*/') < 0)
+				return;
+
+			blockcomment = false;
+			line = line.substring(line.indexOf('*/')+2);	
+		}
+
+		// Allow C style block comments on the start of a line
+		if (line.trim().indexOf('/*') == 0) {
+						  
+			if (line.trim().indexOf('*/') < 0) { // Beginning of a multi-line block comment?
+				blockcomment = true;
+				return;
+			}
+
+			var commentParts = line.trim().substring(2, line.trim().indexOf('*/')).trim().replace(':','').replace(',','').split(' ');
+			
+			// Grab chkaddr: chk0, chk1
+			if (commentParts.length >= 2) {
+				if (commentParts.length > 2)
+					chkaddr = parseInt(commentParts.shift(), 16);
+				chk0 = parseInt(commentParts.shift(), 16) >>> 0;
+				chk1 = parseInt(commentParts.shift(), 16) >>> 0;
+			}
+			// Trim off the comment
+			line = line.trim().substring(line.indexOf('*/')+2);
+		}
+
+		// [/* addr: word1 word2 */] [labelname:] [instruction | directive] [# comment]
+		var lineParts = rsplit(line.replace('//','#').split('#', 1)[0], ':');
 
 		// labelname
 		if (lineParts[0]) {
@@ -265,6 +325,7 @@ function assemble(program, options) {
 		var data;
 
 		var add_dst, add_src1, add_src2, mul_dst, mul_src1, mul_src2;
+		var add_dst_rotator, add_src1_rotator, add_src2_rotator, mul_dst_rotator, mul_src1_rotator, mul_src2_rotator;
 
 		var iword0, iword1;
 
@@ -300,11 +361,16 @@ function assemble(program, options) {
 				if (wa == null) wa = 39;
 				if (wb == null) wb = 39;
 				data = evaluateExpr(slots[i][2], symbols);
-				addcc = cc[pred];
 				var magic = 0;
+				if (Array.isArray(data)) {
+					var pair = fromQpuVector(data);
+					data = pair[0];
+					magic = pair[1];	
+				}
+				addcc = cc[pred];
 				if (pred == 'never')
-				    magic = 0x80;
-				iword0 = data; iword1 = (op << 28 | magic << 20 | addcc << 17 | mulcc << 14 | F << 13 | X << 12 | wa << 6 | wb << 0) >>> 0;
+				    magic |= 0x80;
+				iword0 = data >>> 0; iword1 = (op << 28 | magic << 20 | addcc << 17 | mulcc << 14 | F << 13 | X << 12 | wa << 6 | wb << 0) >>> 0;
 				if (slots.length > 1)
 				    error("Error:ldi doesn't allow additional instruction slots");
 				break;
@@ -336,7 +402,7 @@ function assemble(program, options) {
 				} else {
 				    ra = 0; // TODO: Is this the right value for ra if reg == 0? What is ra meaning if reg == 0?
 				}
-				iword0 = target; iword1 = (op << 28 | bracc << 20 | 1 << 19 | reg << 18 | ra << 13 | X << 12 | wa << 6 | wb << 0) >>> 0;
+				iword0 = target >>>0; iword1 = (op << 28 | bracc << 20 | 1 << 19 | reg << 18 | ra << 13 | X << 12 | wa << 6 | wb << 0) >>> 0;
 				if (slots.length > 1)
 				    error("Error: brr doesn't allow additional instruction slots");
 				break;
@@ -366,7 +432,7 @@ function assemble(program, options) {
 				} else {
 				    ra = 0; // TODO: Is this the right value for ra if reg == 0? What is ra meaning if reg == 0?
 				}
-				iword0 = target; iword1 = (op << 28 | bracc << 20 | 0 << 19 | reg << 18 | ra << 13 | F << 12 | wa << 6 | wb << 0) >>> 0;
+				iword0 = target>>>0; iword1 = (op << 28 | bracc << 20 | 0 << 19 | reg << 18 | ra << 13 | F << 12 | wa << 6 | wb << 0) >>> 0;
 				if (slots.length > 1)
 				    error("Error: bra doesn't allow additional instruction slots");
 				break;
@@ -384,7 +450,7 @@ function assemble(program, options) {
 						addcc = 0;
 
 					if (slots[i].length-1 != instructionArgumentCount(inst))
-						error("Error: Operation '"+inst+"' found", slots[i].length-1, "arguments, needs", instructionArgumentCount(inst), "arguments.");
+						error("Error: Operation '"+inst+"' found", slots[i].length-1, "arguments, expected", instructionArgumentCount(inst), "arguments.");
 
 					add_dst = slots[i][1];
 					if (add_dst != null && banka_w[add_dst] == null && bankb_w[add_dst] == null)
@@ -395,7 +461,7 @@ function assemble(program, options) {
 						// add_src2 is not a acc, ra or rb, now try a small const
 					    add_src1 = evaluateSrc(add_src1, symbols, error);		
 
-						if (imm[add_src1] && rb==null && op==null) {
+						if (imm[add_src1]!=null && rb==null && op==null) {
 							rb = imm[add_src1];
 							op = ops['nopi'];
 							adda = 7;
@@ -411,7 +477,7 @@ function assemble(program, options) {
 
 					    add_src2 = evaluateSrc(add_src2, symbols, error);
 
-						if (imm[add_src2] && ((rb==null && op==null) || (rb==imm[add_src2]) && op==ops['nopi'])) {
+						if (imm[add_src2]!=null && ((rb==null && op==null) || (rb==imm[add_src2]) && op==ops['nopi'])) {
 							rb = imm[add_src2];
 							op = ops['nopi'];	
 							addb = 7;			
@@ -440,16 +506,18 @@ function assemble(program, options) {
 					mul_dst = slots[i][1];
 					if (mul_dst != null && banka_w[mul_dst] == null && bankb_w[mul_dst] == null)
 						error("Error: invalid destination register in second (mul) slot.");
+
 					mul_src1 = slots[i][2];
 					if (typeof(mul_src1) == "string" && (mul_src1.search(">>") != -1 || mul_src1.search("<<") != -1)) {
-					    show("WARNING! Rotator not supported yet, will produce garbage!");
-					    mul_src1 = mul_src1.split(">",1)[0].split(" ",0)[0]
+						var reg_and_rotation = mul_src1.split(">>");
+						mul_src1 = reg_and_rotation[0].trim();
+						mul_src1_rotator = reg_and_rotation[1].trim()=="r5" ? "r5" : evaluateExpr(reg_and_rotation[1], symbols);
 					}
 					if (mul_src1 != null && acc_names[mul_src1] == null && banka_r[mul_src1] == null && bankb_r[mul_src1] == null) {
 						// if its not an immediate as is, try and evaluate expr
 					    mul_src1 = evaluateSrc(mul_src1, symbols, error);
 
-						if (imm[mul_src1] && ((rb==null && op==null) || (op==ops['nopi'] && rb==imm[mul_src1]))) {
+						if (imm[mul_src1]!=null && ((rb==null && op==null) || (op==ops['nopi'] && rb==imm[mul_src1]))) {
 							rb = imm[mul_src1];
 							op = ops['nopi'];
 							mula = 7;
@@ -457,18 +525,22 @@ function assemble(program, options) {
 						else
 							error("Error: invalid first source register in first (mul) slot.", mul_src1, rb, op);
 					}
+
 					mul_src2 = slots[i][3];
-					if (mul_src2 == null)
+					if (mul_src2 == null) {
 						mul_src2 = mul_src1;
+						mul_src2_rotator = mul_src1_rotator;
+					}
 					if (typeof(mul_src2) == "string" && (mul_src2.search(">>") != -1 || mul_src2.search("<<") != -1)) {
-					    show("WARNING! Rotator not supported yet, will produce garbage!");
-					    mul_src2 = mul_src2.split(">",1)[0].split(" ",0)[0]
+						var reg_and_rotation = mul_src2.split(">>");
+						mul_src2 = reg_and_rotation[0].trim();
+						mul_src2_rotator = reg_and_rotation[1].trim()=="r5" ? "r5" : evaluateExpr(reg_and_rotation[1], symbols);
 					}
 					if (mul_src2 != null && acc_names[mul_src2] == null && banka_r[mul_src2] == null && bankb_r[mul_src2] == null) {
 						// if its not an immediate as is, try and evaluate expr
 					    mul_src2 = evaluateSrc(mul_src2, symbols, error);
 
-						if ((imm[mul_src2] && rb==null && op==null) || (op==ops['nopi'] && rb==imm[mul_src2])) {
+						if ((imm[mul_src2]!=null && rb==null && op==null) || (op==ops['nopi'] && rb==imm[mul_src2])) {
 							rb = imm[mul_src2];
 							op = ops['nopi'];
 							mulb = 7;
@@ -487,6 +559,35 @@ function assemble(program, options) {
 			}
 			error("Error: unknown operation '"+inst+"' in slot"+i,'at line', linenumber);
 		}
+
+		// lets grab rb for the rotators
+		if (mul_src1_rotator != null || mul_src2_rotator != null) {
+
+			if (op != null) 
+				error("Error: cannot use rotator with non empty third slot.");
+
+			op = ops["nopi"];
+
+			if (mul_src1_rotator != mul_src2_rotator)
+				error("Error: mismatched rotators in second (mul) slot.");
+			
+			if (mul_src1_rotator != null) {
+				if (rb == null || rb == imm[" >> "+mul_src1_rotator])
+					rb = imm[" >> "+mul_src1_rotator];
+				else
+					error("Error: cannot use rotator due to conflict.");
+
+			}
+
+			if (mul_src2_rotator != null) {
+				if (rb == null || rb == imm[" >> "+mul_src2_rotator])
+					rb = imm[" >> "+mul_src2_rotator];
+				else
+					error("Error: cannot use rotator due to conflict.");
+
+			}
+		}
+
 
 		// should we ever swap nop/movs between add and mul?
 
@@ -684,6 +785,11 @@ function assemble(program, options) {
 		}
 		else
 			show(lineParts[1], addop, mulop, op);
+
+		if (chk0 != null && chk1 != null) {
+			if (chk0 != iword0 || chk1 != iword1)
+				error('Assembly check failed. Got', toHex(iword0), toHex(iword1), 'expected', toHex(chk0), toHex(chk1));
+		}
 	});
 
 	}
