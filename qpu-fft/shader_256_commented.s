@@ -30,6 +30,8 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+.global shader_256
+
 shader_256:
 /*
    On Entry:
@@ -146,7 +148,7 @@ shader_256:
 /* 00000128: cc9e7081 100256e0 */  add rb27, r0, r2; v8adds r0, r0, r1
 /* 00000130: cc9e7081 100049e0 */  add.never -, r0, r2; v8adds r0, r0, r1
 /* 00000138: 0c9e7080 100009e7 */  add.never -, r0, r2
-/* 00000140: 000000b0 f0f80127 */  brr ra4; -, +176 // 0x00000210
+/* 00000140: 000000b0 f0f80127 */  brr ra4, after_write_qpu_0 // 0x00000210
 /* 00000148: 009e7000 100009e7 */  nop
 /* 00000150: 009e7000 100009e7 */  nop
 /* 00000158: 009e7000 100009e7 */  nop
@@ -173,12 +175,13 @@ shader_256:
 /* 000001d8: 00000006 e80009e7 */  ldi.never -, 0x00000006
 /* 000001e0: 0000001f e80009e7 */  ldi.never -, 0x0000001f
 /* 000001e8: 00000007 e80009e7 */  ldi.never -, 0x00000007
-/* 000001f0: 00000000 f0f409e7 */  bra -; -, ra0+0
+/* 000001f0: 00000000 f0f409e7 */  bra -, ra0+0
 /* 000001f8: 15727d80 10021c67 */  mov vw_setup, ra28
 /* 00000200: c0000040 e0021c67 */  ldi vw_setup, 0xc0000040
 /* 00000208: 8c05edf6 10024072 */  add ra1, ra1, rb30; mov vw_addr, ra1
 
-/* 00000210: 00000038 f0f81127 */  brr rb4; -, +56 // 0x00000268
+after_write_qpu_0:
+/* 00000210: 00000038 f0f81127 */  brr rb4, after_write_qpu_1_7 // 0x00000268
 /* 00000218: 009e7000 100009e7 */  nop
 /* 00000220: 009e7000 100009e7 */  nop
 /* 00000228: 009e7000 100009e7 */  nop
@@ -190,12 +193,13 @@ shader_256:
 /* 00000230: 156e7d80 10021c67 */  mov vw_setup, ra27
 /* 00000238: 159e7000 10020c27 */  mov vpm, r0
 /* 00000240: 159e7240 10020c27 */  mov vpm, r1
-/* 00000248: 00000000 f0f4c9e7 */  bra -; -, ra6+0
+/* 00000248: 00000000 f0f4c9e7 */  bra -, ra6+0
 /* 00000250: 009e7000 100009e7 */  nop
 /* 00000258: 156e7d80 10020c67 */  mov vr_setup, ra27
 /* 00000260: 15c27d80 100009e7 */  mov.never -, vpm
 
-/* 00000268: 00000080 f0f801a7 */  brr ra6; -, +128 // 0x00000308
+after_write_qpu_1_7:
+/* 00000268: 00000080 f0f801a7 */  brr ra6, after_write_2_qpu_0 // 0x00000308
 /* 00000270: 009e7000 100009e7 */  nop
 /* 00000278: 009e7000 100009e7 */  nop
 /* 00000280: 009e7000 100009e7 */  nop
@@ -216,12 +220,13 @@ shader_256:
 /* 000002d0: 0000001d e80009e7 */  ldi.never -, 0x0000001d
 /* 000002d8: 00000005 e80009e7 */  ldi.never -, 0x00000005
 /* 000002e0: 0000001e e80009e7 */  ldi.never -, 0x0000001e
-/* 000002e8: 00000000 f0f409e7 */  bra -; -, ra0+0
+/* 000002e8: 00000000 f0f409e7 */  bra -, ra0+0
 /* 000002f0: 00000006 e80009e7 */  ldi.never -, 0x00000006
 /* 000002f8: 0000001f e80009e7 */  ldi.never -, 0x0000001f
 /* 00000300: 00000007 e80009e7 */  ldi.never -, 0x00000007
 
-/* 00000308: 00000248 f0f811a7 */  brr rb6; -, +584 // 0x00000570
+after_write_2_qpu_0:
+/* 00000308: 00000248 f0f811a7 */  brr rb6, calc_addresses_block // 0x00000570
 /* 00000310: 009e7000 100009e7 */  nop
 /* 00000318: 009e7000 100009e7 */  nop
 /* 00000320: 009e7000 100009e7 */  nop
@@ -230,7 +235,7 @@ shader_256:
    Write2 QPU1
 */
 
-/* 00000328: 00000000 f0f409e7 */  bra -; -, ra0+0
+/* 00000328: 00000000 f0f409e7 */  bra -, ra0+0
 /* 00000330: 00000009 e80009e7 */  ldi.never -, 0x00000009
 /* 00000338: 00000011 e80009e7 */  ldi.never -, 0x00000011
 /* 00000340: 009e7000 100009e7 */  nop
@@ -239,7 +244,7 @@ shader_256:
    Write2 QPU2
 */
 
-/* 00000348: 00000000 f0f409e7 */  bra -; -, ra0+0
+/* 00000348: 00000000 f0f409e7 */  bra -, ra0+0
 /* 00000350: 0000000a e80009e7 */  ldi.never -, 0x0000000a
 /* 00000358: 00000012 e80009e7 */  ldi.never -, 0x00000012
 /* 00000360: 009e7000 100009e7 */  nop
@@ -248,7 +253,7 @@ shader_256:
    Write2 QPU3
 */
 
-/* 00000368: 00000000 f0f409e7 */  bra -; -, ra0+0
+/* 00000368: 00000000 f0f409e7 */  bra -, ra0+0
 /* 00000370: 0000000b e80009e7 */  ldi.never -, 0x0000000b
 /* 00000378: 00000013 e80009e7 */  ldi.never -, 0x00000013
 /* 00000380: 009e7000 100009e7 */  nop
@@ -257,7 +262,7 @@ shader_256:
    Write2 QPU4
 */
 
-/* 00000388: 00000000 f0f409e7 */  bra -; -, ra0+0
+/* 00000388: 00000000 f0f409e7 */  bra -, ra0+0
 /* 00000390: 0000000c e80009e7 */  ldi.never -, 0x0000000c
 /* 00000398: 00000014 e80009e7 */  ldi.never -, 0x00000014
 /* 000003a0: 009e7000 100009e7 */  nop
@@ -266,7 +271,7 @@ shader_256:
    Write2 QPU5
 */
 
-/* 000003a8: 00000000 f0f409e7 */  bra -; -, ra0+0
+/* 000003a8: 00000000 f0f409e7 */  bra -, ra0+0
 /* 000003b0: 0000000d e80009e7 */  ldi.never -, 0x0000000d
 /* 000003b8: 00000015 e80009e7 */  ldi.never -, 0x00000015
 /* 000003c0: 009e7000 100009e7 */  nop
@@ -275,7 +280,7 @@ shader_256:
    Write2 QPU6
 */
 
-/* 000003c8: 00000000 f0f409e7 */  bra -; -, ra0+0
+/* 000003c8: 00000000 f0f409e7 */  bra  -, ra0+0
 /* 000003d0: 0000000e e80009e7 */  ldi.never -, 0x0000000e
 /* 000003d8: 00000016 e80009e7 */  ldi.never -, 0x00000016
 /* 000003e0: 009e7000 100009e7 */  nop
@@ -284,7 +289,7 @@ shader_256:
    Write2 QPU7
 */
 
-/* 000003e8: 00000000 f0f409e7 */  bra -; -, ra0+0
+/* 000003e8: 00000000 f0f409e7 */  bra -, ra0+0
 /* 000003f0: 0000000f e80009e7 */  ldi.never -, 0x0000000f
 /* 000003f8: 00000017 e80009e7 */  ldi.never -, 0x00000017
 /* 00000400: 009e7000 100009e7 */  nop
@@ -295,7 +300,7 @@ shader_256:
       r0 = real part
       r1 = complex part
 */
-
+complex_num_round:
 /* 00000408: 14981dc0 d00229e7 */  and.setf -, elem_num, 1; nop
 /* 00000410: 202e7030 1000d9c2 */  nop; fmul.zc ra2, ra11, r0
 /* 00000418: 209cb039 1000c9e2 */  nop; fmul.zc r2, rb11, r1
@@ -338,7 +343,7 @@ shader_256:
    Now call: Write QPUi
 */
 
-/* 00000530: 00000000 f0f489e7 */  bra -; -, ra4+0
+/* 00000530: 00000000 f0f489e7 */  bra -, ra4+0
 /* 00000538: 829f8609 d0064822 */  fsub.zc r0, r3, r0; mov r2, r1 >> 8
 /* 00000540: 819f8449 d0044863 */  fadd.zs r1, r2, r1; mov r3, r1 >> 8
 /* 00000548: 029e7640 10060867 */  fsub.zc r1, r3, r1
@@ -346,8 +351,8 @@ shader_256:
 /*
    Fetch the next complex number, and jump to the arithmetic routine.
 */
-
-/* 00000550: fffffe98 f0f809e7 */  brr -; -, -360 // 0x00000408
+fetch_complex_and_iter:
+/* 00000550: fffffe98 f0f809e7 */  brr -, complex_num_round // 0x00000408
 /* 00000558: 009e7000 a00009e7 */  nop; nop; ldtmu0
 /* 00000560: 159e7900 a0020827 */  mov r0, r4; nop; ldtmu0
 /* 00000568: 159e7900 10020867 */  mov r1, r4
@@ -359,7 +364,7 @@ shader_256:
    ra4 = Write QPU0, or Write QPU1-7 (according to QPU number)
    
 */
-
+calc_addresses_block:
 /* 00000570: 159c5fc0 10022827 */  mov.setf r0, rb5
 /* 00000578: 0d9c11c0 d0020827 */  sub r0, r0, 1; nop
 /* 00000580: 119c51c0 d0020827 */  shl r0, r0, 5; nop
@@ -374,7 +379,7 @@ shader_256:
       
    Call the exit if the input pointer is zero (end of job marker).
 */
-
+fetch_fft_job:
 /* 00000598: 15827d80 100220e7 */  mov.setf ra3, unif
 /* 000005a0: 15827d80 100210e7 */  mov rb3, unif
 
@@ -382,7 +387,7 @@ shader_256:
    Exit if jobs done.
 */
 
-/* 000005a8: 00000420 f00809e7 */  brr.allz -; -, +1056 // 0x000009e8
+/* 000005a8: 00000420 f00809e7 */  brr.allz -, end // 0x000009e8
 /* 000005b0: 95208dbf 100248a3 */  mov r2, ra8; mov r3, rb8
 /* 000005b8: 14988dc0 d00229e7 */  and.setf -, elem_num, 8; nop
 /* 000005c0: 959f8492 d002c3a2 */  mov ra14, r2; mov.zc r2, r2 >> 8
@@ -452,7 +457,7 @@ shader_256:
    Crunch first round of arithmetic.
 */
 
-/* 00000780: fffffdb0 f0f80027 */  brr ra0; -, -592 // 0x00000550
+/* 00000780: fffffdb0 f0f80027 */  brr ra0, fetch_complex_and_iter // 0x00000550
 /* 00000788: 009e7000 100009e7 */  nop
 /* 00000790: 956dbff6 100246db */  mov ra27, rb27; mov rb27, ra27
 /* 00000798: 9571cff6 1002471c */  mov ra28, rb28; mov rb28, ra28
@@ -461,7 +466,7 @@ shader_256:
    And second round.
 */
 
-/* 000007a0: fffffd90 f0f80027 */  brr ra0; -, -624 // 0x00000550
+/* 000007a0: fffffd90 f0f80027 */  brr ra0, fetch_complex_and_iter // 0x00000550
 /* 000007a8: 009e7000 100009e7 */  nop
 /* 000007b0: 956dbff6 100246db */  mov ra27, rb27; mov rb27, ra27
 /* 000007b8: 9571cff6 1002471c */  mov ra28, rb28; mov rb28, ra28
@@ -470,7 +475,7 @@ shader_256:
    Subroutine call to Write2 QPUi
 */
 
-/* 000007c0: 00000000 f0f4c027 */  bra ra0; -, ra6+0
+/* 000007c0: 00000000 f0f4c027 */  bra ra0, ra6+0
 /* 000007c8: 009e7000 100009e7 */  nop
 /* 000007d0: 009e7000 100009e7 */  nop
 /* 000007d8: 009e7000 100009e7 */  nop
@@ -515,7 +520,7 @@ shader_256:
    Crunch third round
 */
 
-/* 000008c8: fffffc68 f0f80027 */  brr ra0; -, -920 // 0x00000550
+/* 000008c8: fffffc68 f0f80027 */  brr ra0, fetch_complex_and_iter // 0x00000550
 /* 000008d0: 009e7000 100009e7 */  nop
 /* 000008d8: 956dbff6 100246db */  mov ra27, rb27; mov rb27, ra27
 /* 000008e0: 9571cff6 1002471c */  mov ra28, rb28; mov rb28, ra28
@@ -545,7 +550,7 @@ shader_256:
    Crunch fourth round
 */
 
-/* 00000988: fffffba8 f0f80027 */  brr ra0; -, -1112 // 0x00000550
+/* 00000988: fffffba8 f0f80027 */  brr ra0, fetch_complex_and_iter // 0x00000550
 /* 00000990: 009e7000 100009e7 */  nop
 /* 00000998: 956dbff6 100246db */  mov ra27, rb27; mov rb27, ra27
 /* 000009a0: 9571cff6 1002471c */  mov ra28, rb28; mov rb28, ra28
@@ -554,7 +559,7 @@ shader_256:
    Subroutine call to Write2 QPUi
 */
 
-/* 000009a8: 00000000 f0f4c027 */  bra ra0; -, ra6+0
+/* 000009a8: 00000000 f0f4c027 */  bra ra0, ra6+0
 /* 000009b0: 009e7000 100009e7 */  nop
 /* 000009b8: 009e7000 100009e7 */  nop
 /* 000009c0: 009e7000 100009e7 */  nop
@@ -563,7 +568,7 @@ shader_256:
    Loop around to pick up the next FFT job
 *.
 
-/* 000009c8: fffffbb0 f0f809e7 */  brr -; -, -1104 // 0x00000598
+/* 000009c8: fffffbb0 f0f809e7 */  brr -, fetch_fft_job // 0x00000598
 /* 000009d0: 009e7000 100009e7 */  nop
 /* 000009d8: 009e7000 100009e7 */  nop
 /* 000009e0: 009e7000 100009e7 */  nop
@@ -572,7 +577,7 @@ shader_256:
    All done, raise an IRQ if QPU0 (rb3 = 1, if QPU0)
    End the thread.
 */
-
+end:
 /* 000009e8: 159c3fc0 100209a7 */  mov irq, rb3
 /* 000009f0: 009e7000 300009e7 */  nop; nop; thrend
 /* 000009f8: 009e7000 100009e7 */  nop
