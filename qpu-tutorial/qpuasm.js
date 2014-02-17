@@ -205,7 +205,7 @@ function assemble(program, options) {
 			var split = splitOnFirst(body, ',');
 			var symbol = split[0];
 			var expr = split[1]; 
-			symbols[symbol] = evaluateExpr(expr, symbols) || 1;
+			symbols[symbol] = evaluateExpr(expr, symbols);
 			if (options.verbose) {
 				show('/* '+symbol+' = '+symbols[symbol]+' */ /*', ".set "+body, '*/');
 			}
