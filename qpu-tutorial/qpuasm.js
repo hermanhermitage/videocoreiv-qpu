@@ -86,8 +86,8 @@ var cc = mkEnum([
 ]);
 
 var bcc = mkEnum([
-        ".allz", ".allnz", ".anyz", ".anynz", ".alln", ".allnn", ".anyn", ".anynn",
-        ".allc", ".allnc", ".anyc", ".anync", ".cc12", ".cc13", ".cc14", ""
+        "allz", "allnz", "anyz", "anynz", "alln", "allnn", "anyn", "anynn",
+        "allc", "allnc", "anyc", "anync", "cc12", "cc13", "cc14", ""
 ]);
 
 var imm = mkEnum([
