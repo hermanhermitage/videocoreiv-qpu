@@ -492,7 +492,7 @@ function assemble(program, options) {
 					if (add_src1 != null && add_src1.lastIndexOf('.') >= 0) {
 						// try: src1[.unpack]
 						add_src1_unpack = unpack_add[add_src1.substring(add_src1.lastIndexOf('.'))];
-						if (add_src1_pack != null)
+						if (add_src1_unpack != null)
 							add_src1 = add_src1.substring(0, add_src1.lastIndexOf('.'));
 						//else
 						//	might not be error, because might be a number eg 1.0 or a expression myvar.field
@@ -576,7 +576,7 @@ function assemble(program, options) {
 					if (typeof(mul_src1) == "string" && mul_src1.lastIndexOf('.') >= 0) {
 						// try: src1[.unpack]
 						mul_src1_unpack = unpack_mul[mul_src1.substring(mul_src1.lastIndexOf('.'))];
-						if (mul_src1_pack != null)
+						if (mul_src1_unpack != null)
 							mul_src1 = mul_src1.substring(0, mul_src1.lastIndexOf('.'));
 						//else
 						//	might not be error, because might be a number eg 1.0 or a expression myvar.field
@@ -842,17 +842,17 @@ function assemble(program, options) {
 			error("Error: all destinations that pack must use a common packing");
 		else {
 			// Unpacking
-			if (desired_unpack && (adda == 4 || addb == 4 || mula == 4 || mulb == 4)) {
+			if (desired_unpack && ((adda == 4 && add_src1_unpack)|| (addb == 4 && add_src2_unpack) || (mula == 4 && mul_src1_unpack) || (mulb == 4 && mul_src2_unpack))) {
 				// unpacking r4 forces packmode 1
 				if (packmode != null && packmode != 1)
 					error('Error: conflict in packing/unpacking choices.');
 				if ((adda == 4 && add_src1_unpack != desired_unpack) || (addb == 4 && add_src2_unpack != desired_unpack)
 				|| (mula == 4 && mul_src1_unpack != desired_unpack) || (mulb == 4 && mul_src2_unpack != desired_unpack))
-					error('Error: all references to r4 must use be unpacked and they must use the same unpacking.');
+					error('Error: all references to r4 must use be unpacked and they must use the same unpacking.', desired_unpack, adda, addb, mula, mulb);
 
 				packmode = 1;
 			}
-			else if (desired_unpack && (adda == 6 || addb == 6 || mula == 6 || mulb == 6)) {
+			else if (desired_unpack && ((adda == 6 && add_src1_unpack)|| (addb == 6 && add_src2_unpack) || (mula == 6 && mul_src1_unpack) || (mulb == 6 && mul_src2_unpack))) {
 				// unpacking r6 requires packmode 0
 				if (packmode != null && packmode != 0)
 					error('Error: conflict in packing/unpacking choices.');
