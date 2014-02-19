@@ -952,8 +952,13 @@ function assemble(program, options) {
 			show(lineParts[1], addop, mulop, op);
 
 		if (chk0 != null && chk1 != null) {
-			if (chk0 != iword0 || chk1 != iword1)
-				error('Assembly check failed. Got', toHex(iword0), toHex(iword1), 'expected', toHex(chk0), toHex(chk1));
+			if (chk0 != iword0 || chk1 != iword1) {
+				// Final check for a case of X mismatch when it doesnt matter
+				if (!options.strictmatch && ((chk1 & 0xffffefff) == (iword1 & 0xffffefff)) && (wa == 39 || (wa >= 32 && wa <= 35)) && (wb == 39 || (wb >= 32 && wb <= 35)))
+					;//console.log('same same but different');
+				else
+					error('Assembly check failed. Got', toHex(iword0), toHex(iword1), 'expected', toHex(chk0), toHex(chk1));
+			}
 		}
 	});
 
