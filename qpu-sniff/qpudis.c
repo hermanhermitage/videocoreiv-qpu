@@ -12,7 +12,7 @@ const char *acc_names[] = {
 
 const char *banka_r[64] = {
 	"ra0", "ra1", "ra2", "ra3", "ra4", "ra5", "ra6", "ra7",
-	"ra8", "ra9", "ra10", "ra11", "ra12", "ra13", "ra14", "w",
+	"ra8", "ra9", "ra10", "ra11", "ra12", "ra13", "ra14", "ra15", //ra15 is w in shaders
 	"ra16", "ra17", "ra18", "ra19", "ra20", "ra21", "ra22", "ra23",
 	"ra24", "ra25", "ra26", "ra27", "ra28", "ra29", "ra30", "ra31",
 	"unif", "ra33?", "ra34?", "vary", "ra36?", "ra37?", "elem_num", "nop",
@@ -23,7 +23,7 @@ const char *banka_r[64] = {
 
 const char *bankb_r[64] = {
 	"rb0", "rb1", "rb2", "rb3", "rb4", "rb5", "rb6", "rb7",
-	"rb8", "rb9", "rb10", "rb11", "rb12", "rb13", "rb14", "z",
+	"rb8", "rb9", "rb10", "rb11", "rb12", "rb13", "rb14", "rb15", //rb15 is z in shaders
 	"rb16", "rb17", "rb18", "rb19", "rb20", "rb21", "rb22", "rb23",
 	"rb24", "rb25", "rb26", "rb27", "rb28", "rb29", "rb30", "rb31",
 	"unif", "rb33?", "rb34?", "vary", "rb36?", "rb37?", "qpu_num", "nop",
@@ -34,7 +34,7 @@ const char *bankb_r[64] = {
 
 const char *banka_w[64] = {
 	"ra0", "ra1", "ra2", "ra3", "ra4", "ra5", "ra6", "ra7",
-	"ra8", "ra9", "ra10", "ra11", "ra12", "ra13", "ra14", "w",
+	"ra8", "ra9", "ra10", "ra11", "ra12", "ra13", "ra14", "ra15", //ra15 is w in shaders
 	"ra16", "ra17", "ra18", "ra19", "ra20", "ra21", "ra22", "ra23",
 	"ra24", "ra25", "ra26", "ra27", "ra28", "ra29", "ra30", "ra31",
 	"r0", "r1", "r2", "r3", "tmurs", "r5quad", "irq", "-",
@@ -45,7 +45,7 @@ const char *banka_w[64] = {
 
 const char *bankb_w[64] = {
 	"rb0", "rb1", "rb2", "rb3", "rb4", "rb5", "rb6", "rb7",
-	"rb8", "rb9", "rb10", "rb11", "rb12", "rb13", "rb14", "w?",
+	"rb8", "rb9", "rb10", "rb11", "rb12", "rb13", "rb14", "rb15", //rb15 is z in shaders
 	"rb16", "rb17", "rb18", "rb19", "rb20", "rb21", "rb22", "rb23",
 	"rb24", "rb25", "rb26", "rb27", "rb28", "rb29", "rb30", "rb31",
 	"r0", "r1", "r2", "r3", "tmurs", "r5rep", "irq", "-",
@@ -305,10 +305,34 @@ void show_qpu_branch(uint32_t i0, uint32_t i1)
 
 }
 
+const char *qpu_ldi_unpack(uint32_t unpack, uint32_t data)
+{
+	char *tmp = tmpalloc(128);
+	// unpack = 1 (2 bit signed vectors), 3 = (2 bit unsigned vectors);
+	if ((unpack==1) || (unpack==3)) {
+		int d[16];
+		for (int i=0; i<16; i++) {
+			d[i] = ((data >> (16+i-1))&0x2) | ((data >> i) & 0x1);
+			if ((unpack == 1) && d[i] &0x2)
+				d[i] |= 0xfffffffc;
+		}
+		sprintf(tmp, "[%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d]",
+			d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7],
+			d[8], d[9], d[10], d[11], d[12], d[13], d[14], d[15]);
+	}
+	else {
+		sprintf(tmp, "0x%08x", data);
+	}
+	return tmp;
+}
+
 void show_qpu_imm32(uint32_t i0, uint32_t i1)
 {
 	uint32_t data = i0;
-	uint32_t unknown = (i1 >> 20) & 0xff;
+	uint32_t packbits  = (i1 >> 20) & 0xff;
+	uint32_t unpacking = (packbits >> 5) & 0x7;
+	uint32_t packmul   = (packbits >> 4) & 0x1;
+	uint32_t packing   = (packbits >> 0) & 0xf;
 	uint32_t addcc   = (i1 >> 17) & 0x07;
 	uint32_t mulcc   = (i1 >> 14) & 0x07;
 	uint32_t F       = (i1 >> 13) & 0x01;
@@ -317,16 +341,19 @@ void show_qpu_imm32(uint32_t i0, uint32_t i1)
 	uint32_t wb      = (i1 >>  0) & 0x3f;
 
 	if (showfields) {
-		printf("imm32 data=0x%08x, unknown=0x%02x, addcc=%x, mulcc=%x, F=%x, X=%x, wa=%02d, wb=%02d\n",
-			data, unknown, addcc, mulcc, F, X, wa, wb);
+		printf("imm32 data=0x%08x, unpacking=0x%d, packmul=%d, packing=%d, addcc=%x, mulcc=%x, F=%x, X=%x, wa=%02d, wb=%02d\n",
+			data, unpacking, packmul, packing, addcc, mulcc, F, X, wa, wb);
 	}
 
 	// addop: op[cc][setf] rd[.pack?], immediate
-	printf("%s%s%s %s, 0x%08x", ops[(i1 >> 28) &0xf], cc[addcc], setf[F], qpu_w_add(wa, X), data);
+	if (packbits==0 && addcc==0 && wa==39)
+		printf("nop");
+	else
+		printf("%s%s%s %s%s, %s", ops[(i1 >> 28) &0xf], cc[addcc], setf[F], qpu_w_add(wa, X), qpu_pack_add(packmul, packing, wa, X), qpu_ldi_unpack(unpacking, data));
 
 	// mulop: [op[cc][setf] rd[.pack?], immediate
 	if (mulcc) {
-		printf("; %s%s%s %s, 0x%08x", ops[(i1 >> 28) &0xf], cc[mulcc], setf[F], qpu_w_mul(wb, X), data);
+		printf("; %s%s%s %s%s, %s", ops[(i1 >> 28) &0xf], cc[mulcc], setf[F], qpu_w_mul(wb, X), qpu_pack_mul(packmul, packing, wa, X), qpu_ldi_unpack(unpacking, data));
 	}
 
 	printf("\n");
