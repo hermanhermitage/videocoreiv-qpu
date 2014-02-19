@@ -13,7 +13,7 @@ void main(void) {
 }
 
 */
-# ('shader code' 18ef7800 88)
+# ('shader code' 185f7760 88)
 /* 00000000: 08a67d80 10020827 */  itof r0, x_coord
 /* 00000008: 079e7000 40020827 */  ftoi r0, r0; nop; sbwait
 /* 00000010: 089e7000 10020827 */  itof r0, r0
@@ -26,7 +26,7 @@ void main(void) {
 /* 00000048: 009e7000 100009e7 */  nop
 /* 00000050: 009e7000 500009e7 */  nop; nop; sbdone
 
-# ('shader code' 18ef7880 104)
+# ('shader code' 185f77e0 104)
 /* 00000000: 15827d80 10120027 */  mov ra0.16a, unif
 /* 00000008: 15827d80 10220027 */  mov ra0.16b, unif
 /* 00000010: 15827d80 10021c67 */  mov vw_setup, unif
@@ -41,7 +41,7 @@ void main(void) {
 /* 00000058: 009e7000 100009e7 */  nop
 /* 00000060: 009e7000 100009e7 */  nop
 
-# ('shader code' 18ef79a0 72)
+# ('shader code' 18ef79e0 72)
 /* 00000000: 15827d80 10120027 */  mov ra0.16a, unif
 /* 00000008: 15827d80 10220027 */  mov ra0.16b, unif
 /* 00000010: 15827d80 10021c67 */  mov vw_setup, unif
