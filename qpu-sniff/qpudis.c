@@ -167,6 +167,36 @@ const char *qpu_w_mul(uint32_t wb, uint32_t X) {
 	return X ? banka_w[wb] : bankb_w[wb];
 }
 
+const char *qpu_unpack_add(uint32_t packmul, uint32_t unpack, uint32_t adda) {
+	if ((packmul == 0) && (adda == 6))
+		return srcunpackadd[unpack];
+	if ((packmul == 1) && (adda == 4))
+		return srcunpackmul[unpack];
+	return "";
+}
+
+const char *qpu_unpack_mul(uint32_t packmul, uint32_t unpack, uint32_t adda) {
+	if ((packmul == 0) && (adda == 6))
+		return srcunpackmul[unpack];
+	if ((packmul == 1) && (adda == 4))
+		return srcunpackmul[unpack];
+	return "";
+}
+
+const char *qpu_pack_add(uint32_t packmul, uint32_t pack, uint32_t wa, uint32_t X) {
+	if ((packmul == 0) && (X==0) && (wa<=32)) //todo: what is the real limit on ra range?
+		return dstpackadd[pack];
+	return "";
+}
+
+const char *qpu_pack_mul(uint32_t packmul, uint32_t pack, uint32_t wa, uint32_t X) {
+	if ((packmul == 0) && (X==1) && (wa<=32)) //todo: what is the real limit on ra range?
+		return dstpackmul[pack];
+	if ((packmul == 1))
+		return dstpackmul[pack];
+	return "";
+}
+
 void show_qpu_add_mul(uint32_t i0, uint32_t i1)
 {
 	uint32_t mulop = (i0 >> 29) & 0x7;
@@ -197,12 +227,6 @@ void show_qpu_add_mul(uint32_t i0, uint32_t i1)
 	uint32_t addF  = (F==1) && (addop != 0) && (addcc != 0);
 	uint32_t mulF  = (F==1) && !addF;
 
-	uint32_t addpack   =  packmul || X ? 0 : packing;
-	uint32_t addunpack =  packmul || X ? 0 : unpacking;
-
-	uint32_t mulpack   = !packmul && !X ? 0 : packing;
-	uint32_t mulunpack = !packmul && !X ? 0 : unpacking;
-
 	// Instruction formats:
 	// op[cc][setf]
 	// op[cc][setf] rd[.pack]
@@ -224,7 +248,7 @@ void show_qpu_add_mul(uint32_t i0, uint32_t i1)
 
 	// add op always
 	printf("%s%s%s", addops[addop], cc[addcc], setf[addF]);
-	printf(args[arity], qpu_w_add(wa, X), dstpackadd[addpack], qpu_r(ra, rb, adda, op, 0), arity==2?srcunpackadd[addunpack]:"", qpu_r(ra, rb, addb, op, 0), srcunpackadd[addunpack]);
+	printf(args[arity], qpu_w_add(wa, X), qpu_pack_add(packmul, packing, wa, X), qpu_r(ra, rb, adda, op, 0), qpu_unpack_add(packmul, unpacking, adda), qpu_r(ra, rb, addb, op, 0), qpu_unpack_add(packmul, unpacking, addb));
 
 	// show mul op if non nop or control op is non nop
         if (mulop || (op != 1)) {
@@ -240,11 +264,8 @@ void show_qpu_add_mul(uint32_t i0, uint32_t i1)
 		}
 
 		printf("; %s%s%s", mulops[mulop], cc[mulcc], setf[mulF]);
-		if (packmul || (X==0))
-			printf(args[arity], qpu_w_mul(wb, X), dstpackmul[mulpack], qpu_r(ra, rb, mula, op, 1), arity==2?srcunpackmul[mulunpack]:"", qpu_r(ra, rb, mulb, op, 1), srcunpackmul[mulunpack]);
-		else {
-			printf(args[arity], qpu_w_mul(wb, X), dstpackadd[mulpack], qpu_r(ra, rb, mula, op, 1), arity==2?srcunpackadd[mulunpack]:"", qpu_r(ra, rb, mulb, op, 1), srcunpackadd[mulunpack]);
-		}
+		///* 000003a0: 36020037 18025841 */  xor r1, r0, r0; fmul ra1, ra0, unif
+		printf(args[arity], qpu_w_mul(wb, X), qpu_pack_mul(packmul, packing, wb, X), qpu_r(ra, rb, mula, op, 1), qpu_unpack_mul(packmul, unpacking, mula), qpu_r(ra, rb, mulb, op, 1), qpu_unpack_mul(packmul, unpacking, mulb));
 	}
 
 	// show control op if non nop
