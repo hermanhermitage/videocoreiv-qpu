@@ -1,3 +1,4 @@
+/*
 
 vs/null.vs:
 void main(void) {
@@ -10,7 +11,8 @@ void main(void) {
   gl_FragColor = c1;
 }
 
-('shader code' 185f76a0 56)
+*/
+# ('shader code' 18f686a0 56)
 /* 00000000: 80827036 114059e0 */  nop; mov r0.8a, unif
 /* 00000008: 80827036 415059e0 */  nop; mov r0.8b, unif; sbwait
 /* 00000010: 80827036 116059e0 */  nop; mov r0.8c, unif
@@ -19,7 +21,7 @@ void main(void) {
 /* 00000028: 009e7000 100009e7 */  nop
 /* 00000030: 009e7000 500009e7 */  nop; nop; sbdone
 
-('shader code' 185f7700 104)
+# ('shader code' 18f68700 104)
 /* 00000000: 15827d80 10120027 */  mov ra0.16a, unif
 /* 00000008: 15827d80 10220027 */  mov ra0.16b, unif
 /* 00000010: 15827d80 10021c67 */  mov vw_setup, unif
@@ -34,7 +36,7 @@ void main(void) {
 /* 00000058: 009e7000 100009e7 */  nop
 /* 00000060: 009e7000 100009e7 */  nop
 
-('shader code' 185f7820 72)
+# ('shader code' 18f68820 72)
 /* 00000000: 15827d80 10120027 */  mov ra0.16a, unif
 /* 00000008: 15827d80 10220027 */  mov ra0.16b, unif
 /* 00000010: 15827d80 10021c67 */  mov vw_setup, unif

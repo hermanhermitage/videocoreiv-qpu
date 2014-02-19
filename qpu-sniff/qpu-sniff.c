@@ -163,7 +163,7 @@ void show_raw_fragment(char *type, unsigned int *data, int size) {
 
 void show_fragment(char *type, unsigned int original_address, unsigned int *data, int size) {
 	if (strcmp("'shader code'", type)==0) {
-		printf("(%s %08x %d)\n", type, original_address, size);
+		printf("# (%s %08x %d)\n", type, original_address, size);
 		show_qpu_fragment(data, size/4);
 	} 
 	else {
@@ -180,8 +180,10 @@ void testgl(char *vs_filename, char *fs_filename) {
 	char *vs = (char *)file_load(vs_filename, 0);
 	char *fs = (char *)file_load(fs_filename, 0);
 	if (vs && fs) {
+		printf("/*\n");
 		printf("\n%s:\n%s", vs_filename, vs);
 		printf("\n%s:\n%s", fs_filename, fs);
+		printf("*/\n");
 		begin_gl_test(1);
 		char *vs_log=0, *fs_log=0, *program_log=0;
 		if (run_gl_test(vs, fs, &vs_log, &fs_log, &program_log)) {

@@ -5,36 +5,28 @@ void main(void) {
 }
 
 
-fs/div.fs:
+fs/test.fs:
 uniform vec4 c1;
 uniform vec4 c2;
 void main(void) {
-  gl_FragColor = c1/c2;
+  gl_FragColor = c1+c2;
 }
 
 */
-# ('shader code' 18ef77c0 152)
-/* 00000000: 15827d80 10020d27 */  mov recip, unif
-/* 00000008: 009e7000 400009e7 */  nop; nop; sbwait
-/* 00000010: 009e7000 100009e7 */  nop
-/* 00000018: 20827034 100059e1 */  nop; fmul r1, unif, r4
-/* 00000020: 15827d80 10020d27 */  mov recip, unif
-/* 00000028: 009e7000 100009e7 */  nop
-/* 00000030: 009e7000 100009e7 */  nop
-/* 00000038: 20827034 114059e0 */  nop; fmul r0.8a, unif, r4
-/* 00000040: 95827d89 11525d20 */  mov recip, unif; mov r0.8b, r1
-/* 00000048: 009e7000 100009e7 */  nop
-/* 00000050: 009e7000 100009e7 */  nop
-/* 00000058: 20827034 116059e0 */  nop; fmul r0.8c, unif, r4
-/* 00000060: 15827d80 10020d27 */  mov recip, unif
-/* 00000068: 009e7000 100009e7 */  nop
-/* 00000070: 009e7000 100009e7 */  nop
-/* 00000078: 20827034 117059e0 */  nop; fmul r0.8d, unif, r4
-/* 00000080: 159e7000 30020ba7 */  mov tlbc, r0; nop; thrend
-/* 00000088: 009e7000 100009e7 */  nop
-/* 00000090: 009e7000 500009e7 */  nop; nop; sbdone
+# ('shader code' 18ef77c0 88)
+/* 00000000: 15827d80 10020827 */  mov r0, unif
+/* 00000008: 01827c00 40020867 */  fadd r1, unif, r0; nop; sbwait
+/* 00000010: 15827d80 10020827 */  mov r0, unif
+/* 00000018: 01827c00 10020827 */  fadd r0, unif, r0
+/* 00000020: 95827d80 114258a0 */  mov r2, unif; mov r0.8a, r0
+/* 00000028: 81827c89 11525860 */  fadd r1, unif, r2; mov r0.8b, r1
+/* 00000030: 95827d89 11625860 */  mov r1, unif; mov r0.8c, r1
+/* 00000038: 01827c40 10020867 */  fadd r1, unif, r1
+/* 00000040: 809e7009 317059e0 */  nop; mov r0.8d, r1; thrend
+/* 00000048: 159e7000 10020ba7 */  mov tlbc, r0
+/* 00000050: 009e7000 500009e7 */  nop; nop; sbdone
 
-# ('shader code' 18ef7880 104)
+# ('shader code' 18ef7840 104)
 /* 00000000: 15827d80 10120027 */  mov ra0.16a, unif
 /* 00000008: 15827d80 10220027 */  mov ra0.16b, unif
 /* 00000010: 15827d80 10021c67 */  mov vw_setup, unif
@@ -49,7 +41,7 @@ void main(void) {
 /* 00000058: 009e7000 100009e7 */  nop
 /* 00000060: 009e7000 100009e7 */  nop
 
-# ('shader code' 18ef79a0 72)
+# ('shader code' 18ef7960 72)
 /* 00000000: 15827d80 10120027 */  mov ra0.16a, unif
 /* 00000008: 15827d80 10220027 */  mov ra0.16b, unif
 /* 00000010: 15827d80 10021c67 */  mov vw_setup, unif
