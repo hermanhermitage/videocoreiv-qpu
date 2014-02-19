@@ -102,6 +102,22 @@ var imm = mkEnum([
         " >> 8", " >> 9", " >> 10", " >> 11", " >> 12", " >> 13", " >> 14", " >> 15"
 ]);
 
+var pack_add = mkEnum([
+	"", ".16a", ".16b", ".8abcd", ".8a", ".8b", ".8c", ".8d", ".s", ".16as", ".16bs", ".8abcds", ".8as", ".8bs", ".8cs", ".8ds"
+]);
+
+var pack_mul = mkEnum([
+	"", ".packm01", ".packm02", ".8abcd", ".8a", ".8b", ".8c", ".8d", ".packm08", ".packm09", ".packm10", ".packm11", ".packm12", ".packm13", ".packm14", ".packm15"
+]);
+
+var unpack_add = mkEnum([
+	"", ".16a", ".16b", ".8dr", ".8a", ".8b", ".8c", ".8d"
+]);
+
+var unpack_mul = mkEnum([
+	"", ".16a", ".16b", ".8dr", ".8a", ".8b", ".8c", ".8d"
+]);
+
 function mkReverseMap(o) { var r={}; for (var k in o) { if (Array.isArray(o[k])) o[k].forEach(function(v){ r[v] = k; }); else r[o[k]] = k; } return r; }
 
 function mkEnum(a) { var o={}; var n=0; a.forEach(function(i) { o[i] = n++; }); return o; }
@@ -320,6 +336,7 @@ function assemble(program, options) {
 
 		//   mulop:3 addop:5 ra:6 rb:6 adda:3 addb:3 mula:3 mulb:3, op:4 packbits:8 addcc:3 mulcc:3 F:1 X:1 wa:6 wb:6
 		var mulop, addop, ra, rb, adda, addb, mula, mulb, op, packbits, addcc, mulcc, F, X, wa, wb;
+		var unpack, packmode, pack;
 
 		//   bra/r addr:32, 1111 0000 cond:4 relative:1 register:1 ra:5 X:1 wa:6 wb:6
 		var addr, cond, relative, register;
@@ -329,6 +346,7 @@ function assemble(program, options) {
 
 		var add_dst, add_src1, add_src2, mul_dst, mul_src1, mul_src2;
 		var add_dst_rotator, add_src1_rotator, add_src2_rotator, mul_dst_rotator, mul_src1_rotator, mul_src2_rotator;
+		var add_dst_pack, add_src1_unpack, add_src2_unpack, mul_dst_pack, mul_src1_unpack, mul_src2_unpack;
 
 		var iword0, iword1;
 
@@ -353,6 +371,7 @@ function assemble(program, options) {
 
 			if (i==0 && inst == "ldi") { // ldi.cc.setf reg, immediate
 				op = 14;
+				//todo: packer here
 				wa = banka_w[slots[i][1]];
 				if (wa == null) {
 					wa = bankb_w[slots[i][1]];
@@ -456,10 +475,29 @@ function assemble(program, options) {
 						error("Error: Operation '"+inst+"' found", slots[i].length-1, "arguments, expected", instructionArgumentCount(inst), "arguments.");
 
 					add_dst = slots[i][1];
+
+					if (add_dst != null && add_dst.lastIndexOf('.') >= 0) {
+						// try: dst[.pack]
+						add_dst_pack = pack_add[add_dst.substring(add_dst.lastIndexOf('.'))];
+						if (add_dst_pack != null)
+							add_dst = add_dst.substring(0, add_dst.lastIndexOf('.'));
+						else
+							error("Error: invalid destination packing in first (add) slot.");
+					}
+
 					if (add_dst != null && banka_w[add_dst] == null && bankb_w[add_dst] == null)
 						error("Error: invalid destination register in first (add) slot.");
 
 					add_src1 = slots[i][2];
+					if (add_src1 != null && add_src1.lastIndexOf('.') >= 0) {
+						// try: src1[.unpack]
+						add_src1_unpack = unpack_add[add_src1.substring(add_src1.lastIndexOf('.'))];
+						if (add_src1_pack != null)
+							add_src1 = add_src1.substring(0, add_src1.lastIndexOf('.'));
+						//else
+						//	might not be error, because might be a number eg 1.0 or a expression myvar.field
+					}
+
 					if (add_src1 != null && acc_names[add_src1] == null && banka_r[add_src1] == null && bankb_r[add_src1] == null) {
 						// add_src2 is not a acc, ra or rb, now try a small const
 					    add_src1 = evaluateSrc(add_src1, symbols, error);		
@@ -472,9 +510,20 @@ function assemble(program, options) {
 						else
 							error("Error: '"+add_src1+"' is not a valid source in the first (add) slot.");
 					}
+
 					add_src2 = slots[i][3];
-					if (add_src2 == null)
+					if (add_src2 == null) {
 						add_src2 = add_src1;
+						add_src2_unpack = add_src1_unpack;
+					}
+					if (add_src2_unpack == null && typeof(add_src2)=="string" && add_src2.lastIndexOf('.') >= 0) {
+						//try: src2[.unpack]
+						add_src2_unpack = unpack_add[add_src2.substring(add_src2.lastIndexOf('.'))];
+						if (add_src2_unpack != null)
+							add_src2 = add_src2.substring(0, add_src2.lastIndexOf('.'));
+						//else
+						//	might not be an error as above
+					}
 					if (add_src2 != null && acc_names[add_src2] == null && banka_r[add_src2] == null && bankb_r[add_src2] == null) {
 						// add_src2 is not a acc, ra or rb, now try a small const
 
@@ -507,6 +556,14 @@ function assemble(program, options) {
 						error("Error: ", inst, "should have", instructionArgumentCount(inst), "arguments.");
 
 					mul_dst = slots[i][1];
+					if (mul_dst != null && mul_dst.lastIndexOf('.') >= 0) {
+						// try: dst[.pack]
+						mul_dst_pack = pack_mul[mul_dst.substring(mul_dst.lastIndexOf('.'))];
+						if (mul_dst_pack != null)
+							mul_dst = mul_dst.substring(0, mul_dst.lastIndexOf('.'));
+						else
+							error("Error: invalid destination packing in second (mul) slot.");
+					}
 					if (mul_dst != null && banka_w[mul_dst] == null && bankb_w[mul_dst] == null)
 						error("Error: invalid destination register in second (mul) slot.");
 
@@ -515,6 +572,14 @@ function assemble(program, options) {
 						var reg_and_rotation = mul_src1.split(">>");
 						mul_src1 = reg_and_rotation[0].trim();
 						mul_src1_rotator = reg_and_rotation[1].trim()=="r5" ? "r5" : evaluateExpr(reg_and_rotation[1], symbols);
+					}
+					if (typeof(mul_src1) == "string" && mul_src1.lastIndexOf('.') >= 0) {
+						// try: src1[.unpack]
+						mul_src1_unpack = unpack_mul[mul_src1.substring(mul_src1.lastIndexOf('.'))];
+						if (mul_src1_pack != null)
+							mul_src1 = mul_src1.substring(0, mul_src1.lastIndexOf('.'));
+						//else
+						//	might not be error, because might be a number eg 1.0 or a expression myvar.field
 					}
 					if (mul_src1 != null && acc_names[mul_src1] == null && banka_r[mul_src1] == null && bankb_r[mul_src1] == null) {
 						// if its not an immediate as is, try and evaluate expr
@@ -533,11 +598,20 @@ function assemble(program, options) {
 					if (mul_src2 == null) {
 						mul_src2 = mul_src1;
 						mul_src2_rotator = mul_src1_rotator;
+						mul_src2_unpack = mul_src1_unpack;
 					}
 					if (typeof(mul_src2) == "string" && (mul_src2.search(">>") != -1 /*todo: || mul_src2.search("<<") != -1*/)) {
 						var reg_and_rotation = mul_src2.split(">>");
 						mul_src2 = reg_and_rotation[0].trim();
 						mul_src2_rotator = reg_and_rotation[1].trim()=="r5" ? "r5" : evaluateExpr(reg_and_rotation[1], symbols);
+					}
+					if (mul_src2_unpack == null && typeof(mul_src2) == "string" && mul_src2.lastIndexOf('.') >= 0) {
+						//try: src2[.unpack]
+						mul_src2_unpack = unpack_add[mul_src2.substring(mul_src2.lastIndexOf('.'))];
+						if (mul_src2_unpack != null)
+							mul_src2 = mul_src2.substring(0, mul_src2.lastIndexOf('.'));
+						//else
+						//	might not be an error as above
 					}
 					if (mul_src2 != null && acc_names[mul_src2] == null && banka_r[mul_src2] == null && bankb_r[mul_src2] == null) {
 						// if its not an immediate as is, try and evaluate expr
@@ -749,6 +823,76 @@ function assemble(program, options) {
 				error("Error: instruction must read from register bank a or b more than once.");
 			}
 		}
+
+		// Now lets do the pack and unpack
+
+		// First all instances of unpacking and packing must be the same bits
+		var desired_unpack = add_src1_unpack || add_src2_unpack || mul_src1_unpack || mul_src2_unpack;
+		var desired_pack = add_dst_pack || mul_dst_pack;
+
+		if (!desired_unpack && !desired_pack)
+			; // No packing needed.
+		else if ((add_src1_unpack != null && add_src1_unpack != desired_unpack)
+		|| (add_src2_unpack != null && add_src2_unpack != desired_unpack)
+		|| (mul_src1_unpack != null && mul_src1_unpack != desired_unpack)
+		|| (mul_src2_unpack != null && mul_src2_unpack != desired_unpack))
+			error("Error: all sources that unpack must use a common unpacking");
+		else if ((add_dst_pack != null && add_dst_pack != desired_pack)
+		     || (mul_dst_pack != null && mul_dst_pack != desired_pack))
+			error("Error: all destinations that pack must use a common packing");
+		else {
+			// Unpacking
+			if (desired_unpack && (adda == 4 || addb == 4 || mula == 4 || mulb == 4)) {
+				// unpacking r4 forces packmode 1
+				if (packmode != null && packmode != 1)
+					error('Error: conflict in packing/unpacking choices.');
+				if ((adda == 4 && add_src1_unpack != desired_unpack) || (addb == 4 && add_src2_unpack != desired_unpack)
+				|| (mula == 4 && mul_src1_unpack != desired_unpack) || (mulb == 4 && mul_src2_unpack != desired_unpack))
+					error('Error: all references to r4 must use be unpacked and they must use the same unpacking.');
+
+				packmode = 1;
+			}
+			else if (desired_unpack && (adda == 6 || addb == 6 || mula == 6 || mulb == 6)) {
+				// unpacking r6 requires packmode 0
+				if (packmode != null && packmode != 0)
+					error('Error: conflict in packing/unpacking choices.');
+				if ((adda == 6 && add_src1_unpack != desired_unpack) || (addb == 6 && add_src2_unpack != desired_unpack)
+				|| (mula == 6 && mul_src1_unpack != desired_unpack) || (mulb == 6 && mul_src2_unpack != desired_unpack))
+					error('Error: all references to ra0-ra31 must use be unpacked and they must use the same unpacking.');
+				packmode = 0;
+			}
+			else if (desired_unpack) {
+				error('Error: only ra0-ra31 or r4 may be unpacked.');
+			}
+
+			// Packing
+//			console.log('-->', desired_pack, add_dst_pack, mul_dst_pack);
+			if (desired_pack && add_dst_pack) {
+				// ra packing must use packmode 0
+				if (packmode != null && packmode != 0)
+					error('Error: conflict in packing/unpacking choices.');
+				if ((X!=0) && add_dst >= 32)
+					error('Error: can only pack to ra0..ra31 in add slot.');
+				if (mul_dst_pack)
+					error('Error: cannot pack to both add and multiply slots.');
+				
+				packmode = 0;
+			}
+			else if (desired_pack && mul_dst_pack) {
+				if (X==0 || (mul_dst >= banka_w["r0"] && mul_dst <= banka_w["r3"])) {
+					// writing to bank rb, or r0-r3,
+					if (packmode != null && packmode != 1)
+						error('Error: conflict in packing/unpacking choices.');
+					packmode = 1;
+				}
+				else { // ra.pack
+					// Good to pack in either packmode
+					if (packmode == null) packmode = 1;
+				}
+			}
+
+		}
+		packbits = desired_unpack << 5 | packmode << 4 | desired_pack;
 
 		if (op == null)
 			op = ops["nop"];
