@@ -128,7 +128,7 @@ const char *setf[] = {
 unsigned tmpthis=0;
 unsigned tmpnext=0;
 char tmpbuff[256];
-#define tmpalloc(sizebytes) ( tmpthis = tmpnext+sizebytes > sizeof(tmp) ? 0 : tmpnext, tmpnext = (tmpthis+sizebytes), &tmpbuff[tmpthis])
+#define tmpalloc(sizebytes) ( tmpthis = tmpnext+sizebytes > sizeof(tmpbuff) ? 0 : tmpnext, tmpnext = (tmpthis+sizebytes), &tmpbuff[tmpthis])
 
 const char *qpu_r(uint32_t ra, uint32_t rb, uint32_t adda, uint32_t op, int rotator) {
 
