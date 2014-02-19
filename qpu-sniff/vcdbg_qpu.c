@@ -122,7 +122,7 @@ void scan_reloc(struct processor_t *bo, char *s) {
 			for (; type && (!o->filters || o->filters[i]); i++) {
 				if (strcmp(type, o->filters[i])==0) {
 					char dump[256];
-					sprintf(dump, "sudo vcdbg dump 0x%08x %d", data, size);
+					sprintf(dump, "sudo vcdbg dump 0x%08x %d 2>&1", data, size);
 					process(&new_processor_data(size, type, data, o->on_reloc), dump);
 					continue;
 				}
@@ -139,7 +139,7 @@ struct processor_fn_t processor_fn_reloc = {
 #define new_processor_reloc(filters, on_reloc) *(struct processor_t *)&(struct processor_reloc_t){&processor_fn_reloc, filters, on_reloc}
 
 void vcdbg_scan_relocs(char *filters[], void on_reloc(char *type, unsigned int original_addr, unsigned int *data, int size)) {
-	process(&new_processor_reloc(filters ? filters : default_filters, on_reloc), "sudo vcdbg reloc small");
+	process(&new_processor_reloc(filters ? filters : default_filters, on_reloc), "sudo vcdbg reloc small 2>&1");
 }
 
 
