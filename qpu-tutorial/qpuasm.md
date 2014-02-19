@@ -2,7 +2,7 @@
 A rudimentary assembler (very alpha at this stage, will improve with use).
 It needs Node.js to run (will target web page later).
 
-NOTE: Rotator and Pack/Unpack are not yet supported.
+NOTE: Rotator and Pack/Unpack has now been added but is preliminary.
 
 #### Usage:
 ```
@@ -19,7 +19,7 @@ NOTE: Rotator and Pack/Unpack are not yet supported.
 [addop] [; mulop] [; op]
   
 Where addop, mulop and op are:
-  op [dst [, src1 [, src2]]
+  op [dst[.pack] [, src1[.unpack] [, src2[.unpack]]]
 
 addop:
   nop, fadd, fsub, fmin, fmax, fminabs, fmaxabs, ftoi, itof, add, sub, shr, asr
@@ -36,6 +36,12 @@ dst, src1, src2:
   a register reference: r0...r5 or ra0...ra63, or rb0...rb63, or special reg (vpm, unif, ...).
   a small constant
   
+pack:
+  .16a, .16b, .8abcd, .8a, .8b, .8c, .8d, .s, .16as, .16bs, .8abcds, .8as, .8bs, .8cs, .8ds
+  
+unpack:
+  .16a, .16b, .8dr, .8a, .8b, .8c, .8d
+
 Directives:
   .set    symbol, jsexpr
   .global symbol
