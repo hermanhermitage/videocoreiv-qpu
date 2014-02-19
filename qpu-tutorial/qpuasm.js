@@ -14,7 +14,7 @@ var acc_names = mkEnum([
 
 var banka_r = mkEnum([
         "ra0", "ra1", "ra2", "ra3", "ra4", "ra5", "ra6", "ra7",
-        "ra8", "ra9", "ra10", "ra11", "ra12", "ra13", "ra14", "w",
+        "ra8", "ra9", "ra10", "ra11", "ra12", "ra13", "ra14", "ra15",
         "ra16", "ra17", "ra18", "ra19", "ra20", "ra21", "ra22", "ra23",
         "ra24", "ra25", "ra26", "ra27", "ra28", "ra29", "ra30", "ra31",
         "unif", "ra33", "ra34", "vary", "ra36", "ra37", "elem_num", "-",
@@ -22,10 +22,11 @@ var banka_r = mkEnum([
         "vpm", "vr_busy", "vr_wait", "mutex", "ra52", "ra53", "ra54", "ra55",
         "ra56", "ra57", "ra58", "ra59", "ra60", "ra61", "ra62", "ra63",
 ]);
+banka_r['w'] = banka_r['ra15'];
 
 var bankb_r = mkEnum([
         "rb0", "rb1", "rb2", "rb3", "rb4", "rb5", "rb6", "rb7",
-        "rb8", "rb9", "rb10", "rb11", "rb12", "rb13", "rb14", "z",
+        "rb8", "rb9", "rb10", "rb11", "rb12", "rb13", "rb14", "rb15",
         "rb16", "rb17", "rb18", "rb19", "rb20", "rb21", "rb22", "rb23",
         "rb24", "rb25", "rb26", "rb27", "rb28", "rb29", "rb30", "rb31",
         "unif", "rb33", "rb34", "vary", "rb36", "rb37", "qpu_num", "-",
@@ -33,10 +34,11 @@ var bankb_r = mkEnum([
         "vpm", "vw_busy", "vw_wait", "mutex", "rb52", "rb53", "rb54", "rb55",
         "rb56", "rb57", "rb58", "rb59", "rb60", "rb61", "rb62", "rb63",
 ]);
+bankb_r['z'] = bankb_r['rb15'];
 
 var banka_w = mkEnum([
         "ra0", "ra1", "ra2", "ra3", "ra4", "ra5", "ra6", "ra7",
-        "ra8", "ra9", "ra10", "ra11", "ra12", "ra13", "ra14", "w",
+        "ra8", "ra9", "ra10", "ra11", "ra12", "ra13", "ra14", "ra15",
         "ra16", "ra17", "ra18", "ra19", "ra20", "ra21", "ra22", "ra23",
         "ra24", "ra25", "ra26", "ra27", "ra28", "ra29", "ra30", "ra31",
         "r0", "r1", "r2", "r3", "tmurs", "r5quad", "irq", "-",
@@ -44,10 +46,11 @@ var banka_w = mkEnum([
         "vpm", "vr_setup", "vr_addr", "mutex", "recip", "recipsqrt", "exp", "log",
         "t0s", "t0t", "t0r", "t0b", "t1s", "t1t", "t1r", "t1b",
 ]);
+banka_w['w'] = banka_w['ra15'];
 
 var bankb_w = mkEnum([
         "rb0", "rb1", "rb2", "rb3", "rb4", "rb5", "rb6", "rb7",
-        "rb8", "rb9", "rb10", "rb11", "rb12", "rb13", "rb14", "w",
+        "rb8", "rb9", "rb10", "rb11", "rb12", "rb13", "rb14", "rb15",
         "rb16", "rb17", "rb18", "rb19", "rb20", "rb21", "rb22", "rb23",
         "rb24", "rb25", "rb26", "rb27", "rb28", "rb29", "rb30", "rb31",
         "r0", "r1", "r2", "r3", "tmurs", "r5rep", "irq", "-",
@@ -55,6 +58,7 @@ var bankb_w = mkEnum([
         "vpm", "vw_setup", "vw_addr", "mutex", "recip", "recipsqrt", "exp", "log",
         "t0s", "t0t", "t0r", "t0b", "t1s", "t1t", "t1r", "t1b",
 ]);
+bankb_w['z'] = bankb_w['rb15'];
 
 var addops = mkEnum([
        "nop", "fadd", "fsub", "fmin", "fmax", "fminabs", "fmaxabs", "ftoi",
@@ -182,7 +186,7 @@ function fromQpuVector(vector) {
 	if ((min<0 || max>3) && (min<-2 || max>1))
 		error("Error: vector must contain only integers between 0..3 or -2..1");
 	
-	return [bits, min < 0 ? 0x20 : 0x60];	
+	return [bits, max > 1 ? 0x60 : 0x20];	
 }
 
 function instructionToParts(x) {
@@ -369,14 +373,24 @@ function assemble(program, options) {
 					
 			}
 
-			if (i==0 && inst == "ldi") { // ldi.cc.setf reg, immediate
+			if ((i==0 || (i==1 && addop == addops["nop"] && addcc==cc["never"])) && inst == "ldi") { // [nop | ldi]; ldi.cc.setf reg, immediate
 				op = 14;
 				//todo: packer here
-				wa = banka_w[slots[i][1]];
-				if (wa == null) {
-					wa = bankb_w[slots[i][1]];
-					X = 1;
+				if (i==0) {
+					wa = banka_w[slots[i][1]];
+					if (wa == null) {
+						wa = bankb_w[slots[i][1]];
+						X = 1;
+					}
 				}
+				else {
+					wb = bankb_w[slots[i][1]];
+					if (wb == null) {
+						wb = banka_w[slots[i][1]];
+						X = 1;
+					}
+				}
+
 				if (wa == null && wb == null)
 					error("Error: invalid register in ldi instruction");
 
@@ -389,11 +403,15 @@ function assemble(program, options) {
 					data = pair[0];
 					magic = pair[1];	
 				}
-				addcc = cc[pred];
+				if (i==0)
+					addcc = cc[pred];
+				else
+					mulcc = cc[pred];
+
 				if (pred == 'never')
 				    magic |= 0x80;
 				iword0 = data >>> 0; iword1 = (op << 28 | magic << 20 | addcc << 17 | mulcc << 14 | F << 13 | X << 12 | wa << 6 | wb << 0) >>> 0;
-				if (slots.length > 1)
+				if (slots.length > i+1)
 				    error("Error:ldi doesn't allow additional instruction slots");
 				break;
 			}
