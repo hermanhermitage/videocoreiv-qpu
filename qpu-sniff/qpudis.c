@@ -49,7 +49,7 @@ const char *bankb_w[64] = {
 	"rb16", "rb17", "rb18", "rb19", "rb20", "rb21", "rb22", "rb23",
 	"rb24", "rb25", "rb26", "rb27", "rb28", "rb29", "rb30", "rb31",
 	"r0", "r1", "r2", "r3", "tmurs", "r5rep", "irq", "-",
-	"unif_addr", "y_coord", "rev_flag", "stencil", "tlbz", "tlbm", "tlbc", "tlbam",
+	"unif_addr_rel", "y_coord", "rev_flag", "stencil", "tlbz", "tlbm", "tlbc", "tlbam",
 	"vpm", "vw_setup", "vw_addr", "mutex", "recip", "recipsqrt", "exp", "log",
 	"t0s", "t0t", "t0r", "t0b", "t1s", "t1t", "t1r", "t1b",
 };
