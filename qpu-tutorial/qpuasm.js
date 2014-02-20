@@ -54,7 +54,7 @@ var bankb_w = mkEnum([
         "rb16", "rb17", "rb18", "rb19", "rb20", "rb21", "rb22", "rb23",
         "rb24", "rb25", "rb26", "rb27", "rb28", "rb29", "rb30", "rb31",
         "r0", "r1", "r2", "r3", "tmurs", "r5rep", "irq", "-",
-        "unif_addr", "y_coord", "rev_flag", "stencil", "tlbz", "tlbm", "tlbc", "tlbam",
+        "unif_addr_rel", "y_coord", "rev_flag", "stencil", "tlbz", "tlbm", "tlbc", "tlbam",
         "vpm", "vw_setup", "vw_addr", "mutex", "recip", "recipsqrt", "exp", "log",
         "t0s", "t0t", "t0r", "t0b", "t1s", "t1t", "t1r", "t1b",
 ]);
@@ -186,7 +186,7 @@ function fromQpuVector(vector) {
 	if ((min<0 || max>3) && (min<-2 || max>1))
 		error("Error: vector must contain only integers between 0..3 or -2..1");
 	
-	return [bits, max > 1 ? 0x60 : 0x20];	
+	return [bits, max > 1 ? 0x3 : 0x1];	
 }
 
 function instructionToParts(x) {
@@ -373,47 +373,68 @@ function assemble(program, options) {
 					
 			}
 
-			if ((i==0 || (i==1 && addop == addops["nop"] && addcc==cc["never"])) && inst == "ldi") { // [nop | ldi]; ldi.cc.setf reg, immediate
+			if ((i==0 || (i==1 && addop == addops["nop"] && addcc==cc["never"]) || (i==1 && op==14)) && inst == "ldi") { // [nop | ldi]; ldi.cc.setf reg, immediate
 				op = 14;
+
+//				console.log(i, inst, pred, X, slots[i][1], addcc, mulcc, wa, wb);
+
 				//todo: packer here
-				if (i==0) {
-					wa = banka_w[slots[i][1]];
-					if (wa == null) {
+				if (i==0) { // first ldi of a pair
+					addcc = cc[pred];
+					if (addcc == null)
+						error("Error: invalid condition predicate for first (add) slot.");
+					if (pred == 'never')
+					    unpack |= 0x4;
+					if ((X == null || X == 0) && banka_w[slots[i][1]] != null) {
+						wa = banka_w[slots[i][1]];
+						X = 0;
+					}
+					else if ((X == null || X == 1) && bankb_w[slots[i][1]] != null) {
 						wa = bankb_w[slots[i][1]];
 						X = 1;
 					}
+					else {
+						error("Error: invalid register in ldi instruction");
+					}
 				}
-				else {
-					wb = bankb_w[slots[i][1]];
-					if (wb == null) {
+				else { // second ldi of a pair
+					mulcc = cc[pred];
+					if (mulcc == null)
+						error("Error: invalid condition predicate for second (mul) slot.");
+					if ((X == null || X == 0) && bankb_w[slots[i][1]] != null) {
+						wb = bankb_w[slots[i][1]];
+						X = 0;
+					}
+					else if ((X == null || X == 1) && banka_w[slots[i][1]] != null) {
 						wb = banka_w[slots[i][1]];
 						X = 1;
 					}
+					else {
+						error("Error: invalid register in ldi instruction");
+					}
 				}
 
-				if (wa == null && wb == null)
-					error("Error: invalid register in ldi instruction");
-
-				if (wa == null) wa = 39;
-				if (wb == null) wb = 39;
-				data = evaluateExpr(slots[i][2], symbols);
-				var magic = 0;
-				if (Array.isArray(data)) {
-					var pair = fromQpuVector(data);
-					data = pair[0];
-					magic = pair[1];	
-				}
-				if (i==0)
-					addcc = cc[pred];
+				var immdata = evaluateExpr(slots[i][2], symbols);
+				if (data == null || data == immdata)
+					data = immdata;
 				else
-					mulcc = cc[pred];
+					error("Error: ldi constant must be the same in both instructions");
 
-				if (pred == 'never')
-				    magic |= 0x80;
-				iword0 = data >>> 0; iword1 = (op << 28 | magic << 20 | addcc << 17 | mulcc << 14 | F << 13 | X << 12 | wa << 6 | wb << 0) >>> 0;
-				if (slots.length > i+1)
-				    error("Error:ldi doesn't allow additional instruction slots");
-				break;
+				if ((i==0 && (slots.length < 2 || slots[1][0].indexOf('ldi') != 0)) || i==1) {
+					if (Array.isArray(data)) {
+						var pair = fromQpuVector(data);
+						data = pair[0];
+						unpack = pair[1];	
+					}
+					if (wa == null) wa = 39;
+					if (wb == null) wb = 39;
+					packbits = unpack << 5 | packmode << 4 | pack;
+					iword0 = data >>> 0; iword1 = (op << 28 | packbits << 20 | addcc << 17 | mulcc << 14 | F << 13 | X << 12 | wa << 6 | wb << 0) >>> 0;
+					if (slots.length > i+1)
+					    error("Error:ldi doesn't allow additional instruction slots");
+					break;
+				}
+				continue;
 			}
 			else if (i==0 && inst == "brr") { // brr.bcc reg, target
 				op = 15;
