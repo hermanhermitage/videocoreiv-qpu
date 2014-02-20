@@ -376,21 +376,32 @@ function assemble(program, options) {
 			if ((i==0 || (i==1 && addop == addops["nop"] && addcc==cc["never"]) || (i==1 && op==14)) && inst == "ldi") { // [nop | ldi]; ldi.cc.setf reg, immediate
 				op = 14;
 
-//				console.log(i, inst, pred, X, slots[i][1], addcc, mulcc, wa, wb);
+				// parse packer
+				var ldi_dst = slots[i][1];
+				var ldi_dst_pack;
 
-				//todo: packer here
+				if (ldi_dst != null && ldi_dst.lastIndexOf('.') >= 0) {
+					// try: dst[.pack]
+					ldi_dst_pack = pack_add[ldi_dst.substring(ldi_dst.lastIndexOf('.'))];
+					if (ldi_dst_pack != null)
+						ldi_dst = ldi_dst.substring(0, ldi_dst.lastIndexOf('.'));
+					else
+						error("Error: invalid destination packing in first (add) slot.");
+				}
+
 				if (i==0) { // first ldi of a pair
 					addcc = cc[pred];
+					add_dst_pack = ldi_dst_pack;
 					if (addcc == null)
 						error("Error: invalid condition predicate for first (add) slot.");
 					if (pred == 'never')
 					    unpack |= 0x4;
-					if ((X == null || X == 0) && banka_w[slots[i][1]] != null) {
-						wa = banka_w[slots[i][1]];
+					if ((X == null || X == 0) && banka_w[ldi_dst] != null) {
+						wa = banka_w[ldi_dst];
 						X = 0;
 					}
-					else if ((X == null || X == 1) && bankb_w[slots[i][1]] != null) {
-						wa = bankb_w[slots[i][1]];
+					else if ((X == null || X == 1) && bankb_w[ldi_dst] != null) {
+						wa = bankb_w[ldi_dst];
 						X = 1;
 					}
 					else {
@@ -399,14 +410,15 @@ function assemble(program, options) {
 				}
 				else { // second ldi of a pair
 					mulcc = cc[pred];
+					mul_dst_pack = ldi_dst_pack;
 					if (mulcc == null)
 						error("Error: invalid condition predicate for second (mul) slot.");
-					if ((X == null || X == 0) && bankb_w[slots[i][1]] != null) {
-						wb = bankb_w[slots[i][1]];
+					if ((X == null || X == 0) && bankb_w[ldi_dst] != null) {
+						wb = bankb_w[ldi_dst];
 						X = 0;
 					}
-					else if ((X == null || X == 1) && banka_w[slots[i][1]] != null) {
-						wb = banka_w[slots[i][1]];
+					else if ((X == null || X == 1) && banka_w[ldi_dst] != null) {
+						wb = banka_w[ldi_dst];
 						X = 1;
 					}
 					else {
@@ -421,11 +433,26 @@ function assemble(program, options) {
 					error("Error: ldi constant must be the same in both instructions");
 
 				if ((i==0 && (slots.length < 2 || slots[1][0].indexOf('ldi') != 0)) || i==1) {
+					// Vector const?
 					if (Array.isArray(data)) {
 						var pair = fromQpuVector(data);
 						data = pair[0];
 						unpack = pair[1];	
 					}
+					// Packer
+					if (add_dst_pack || mul_dst_pack) {
+						if (add_dst_pack) {
+							if (X != 0)
+								error("Error: can only pack to ra0-ra31 in first ldi slot");
+							else
+								pack = add_dst_pack;
+						}
+						else {
+							// pack to ra, rb or r0-r3
+							packmode = 1;
+						}
+					}
+
 					if (wa == null) wa = 39;
 					if (wb == null) wb = 39;
 					packbits = unpack << 5 | packmode << 4 | pack;
