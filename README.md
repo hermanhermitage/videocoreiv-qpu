@@ -300,7 +300,7 @@ Where:
     100101                        r5quad     r5rep         
     100110  elem_num   qpu_num    irq        irq
     100111  (nop)      (nop)      (nop)      (nop)
-    101000                        unif_addr  unif_addr
+    101000                        unif_addr  unif_addr_rel
     101001  x_coord    y_coord    x_coord    y_coord
     101010  ms_mask    rev_flag   ms_mask    rev_flag
     101011                        stencil    stencil
