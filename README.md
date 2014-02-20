@@ -176,15 +176,12 @@ Where:
     100  r4  accumulator 4
     101  r5  accumulator 5
     110  ra  register from bank a
-    111  rb  regoster from bank b
+    111  rb  register from bank b
   
   packbits control the packing/unpacking operation.
     Each 32 bit value can be viewed as (a:8, b:8, c:8, d:8) or (a:16, b:16)
-    uuu0pppp if X==0 packbits apply to addop destination and second source.
-             if X==1 packbits apply to mulop destination and second source.
-    uuu1pppp packbits apply to mulop destination and second source.
-  (Only registers and not accumulators can be unpacked, but either can be packed.
-   In shaders its not uncommon to see round tripping thru registers).
+    uuu0pppp unpack from ra0-31 only, pack to ra0-31 only.
+    uuu1pppp unpack from r4 only, pack (multiply dst only) to r0-r3, ra0-31 or rb0-31.
    
   uuu unpacking add/mul source (rb)
     000  (32) full 32 bit value
@@ -278,7 +275,7 @@ Where:
     001100  ra12       rb12       ra12       rb12
     001101  ra13       rb13       ra13       rb13
     001110  ra14       rb14       ra14       rb14
-    001111  w          z          w          w?
+    001111  ra15 (w)   rb15 (z)   ra15 (w)   rb15 (z)
     001000  ra16       rb16       ra16       rb16
     001001  ra17       rb17       ra17       rb17
     001010  ra18       rb18       ra18       rb18
@@ -301,7 +298,7 @@ Where:
     100011  vary       vary       r3         r3         
     100100                        tmurs      tmurs         
     100101                        r5quad     r5rep         
-    100110  elem_num   qpu_num    irq?       irq?
+    100110  elem_num   qpu_num    irq        irq
     100111  (nop)      (nop)      (nop)      (nop)
     101000                        unif_addr  unif_addr
     101001  x_coord    y_coord    x_coord    y_coord
