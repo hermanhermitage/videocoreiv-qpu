@@ -842,8 +842,31 @@ function assemble(program, options) {
 			}
 		}
 
-		// Now lets do the pack and unpack
-
+		// Now lets do the pack and unpack:
+		//
+		//  (.unpack, .packmode, .pack): addop add_dst[.pack], add_src1[.unpack], add_src2[.unpack]; mulop mul_dst[.pack], mul_src1[.unpack], mul_src2[.unpack]
+		//
+		//  There are no pack/unpack enable bits, it all comes down to .packmode and what sources and destinations support packing and unpacking.
+		//  when a source/destination doesnt support the packing/unpacking it will be used in its natural state.
+		//
+		//  From empirical testing:
+		//  
+		//  Unpack:
+		//    packmode=0:
+		//      add source can unpack raX.unpack
+		//      mul source can unpack raX.unpack
+		//    packmode=1:
+		//      add source can unpack r4.unpack
+		//      mul source can unpack r4.unpack
+		//
+		//  Pack:
+		//    packmode=0:
+		//      add destination can pack raX.pack
+		//      mul destination can pack raX.pack
+		//    packmode=1:
+		//      add destination cannot pack
+		//      mul destination can pack rX.pack, raX.pack or rbX.pack
+		
 		// First all instances of unpacking and packing must be the same bits
 		var desired_unpack = add_src1_unpack || add_src2_unpack || mul_src1_unpack || mul_src2_unpack;
 		var desired_pack = add_dst_pack || mul_dst_pack;
