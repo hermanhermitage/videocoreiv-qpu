@@ -373,7 +373,7 @@ function assemble(program, options) {
 					
 			}
 
-			if ((i==0 || (i==1 && addop == addops["nop"] && addcc==cc["never"]) || (i==1 && op==14)) && inst == "ldi") { // [nop | ldi]; ldi.cc.setf reg, immediate
+			if ((i==0 || (i==1 && addop == addops["nop"] && addcc==cc["never"]) || (i==1 && op==14)) && (inst == "ldi" || inst == "sacq" || inst == "srel")) { // [nop | ldi]; ldi.cc.setf reg, immediate
 				op = 14;
 
 				// parse packer
@@ -394,8 +394,6 @@ function assemble(program, options) {
 					add_dst_pack = ldi_dst_pack;
 					if (addcc == null)
 						error("Error: invalid condition predicate for first (add) slot.");
-					if (pred == 'never')
-					    unpack |= 0x4;
 					if ((X == null || X == 0) && banka_w[ldi_dst] != null) {
 						wa = banka_w[ldi_dst];
 						X = 0;
@@ -432,7 +430,7 @@ function assemble(program, options) {
 				else
 					error("Error: ldi constant must be the same in both instructions");
 
-				if ((i==0 && (slots.length < 2 || slots[1][0].indexOf('ldi') != 0)) || i==1) {
+				if ((i==0 && (slots.length < 2 || (slots[1][0].indexOf('ldi') != 0 && slots[1][0].indexOf('sacq') != 0 && slots[1][0].indexOf('srel') != 0) )) || i==1) {
 					// Vector const?
 					if (Array.isArray(data)) {
 						var pair = fromQpuVector(data);
@@ -453,8 +451,45 @@ function assemble(program, options) {
 						}
 					}
 
-					if (wa == null) wa = 39;
-					if (wb == null) wb = 39;
+					// Semaphore acquire/release?
+					if (inst == "sacq" || inst == "srel") {
+						var old = data;
+						if (inst == "sacq") data = data | 0x00000010;
+						if (inst == "srel") data = data & 0xffffffef;
+
+						// Allow advanced use say sacq r0, 0xffffffff, provided the immediate value
+						// is compatible with the value required in the semaphore acquire bit (bit 4)
+						if (old != data && old > 0xf)
+							error('Error: sacq/srel semaphore out of range 0..15');
+
+						// Mark as semaphore instruction
+					    	unpack |= 0x4;
+
+						// todo, were both slots the same sacq or srel?
+						if (i==1 && (slots[0][0].indexOf('nop') != 0 && slots[0][0].indexOf(inst) != 0))
+							error('Error: semaphore instruction must be the same in both slots');
+					}
+
+					// If destination is -, make sure any implicit always condition changes to .never
+					if (wa == null) {
+						wa = 39;
+						if (X==0) {
+							if (addcc == cc[""]) addcc = cc["never"];
+						}
+						else {
+							if (mulcc == cc[""]) mulcc = cc["never"];
+						}
+					}
+					if (wb == null) {
+						wb = 39;
+						if (X==0) {
+							if (mulcc == cc[""]) mulcc = cc["never"];
+						}
+						else {
+							if (addcc == cc[""]) addcc = cc["never"];
+						}
+					}
+
 					packbits = unpack << 5 | packmode << 4 | pack;
 					iword0 = data >>> 0; iword1 = (op << 28 | packbits << 20 | addcc << 17 | mulcc << 14 | F << 13 | X << 12 | wa << 6 | wb << 0) >>> 0;
 					if (slots.length > i+1)
