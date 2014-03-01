@@ -25,6 +25,9 @@ ftoi r0, r1, r2
 itof r0
 itof r0, r1, r2
 
+# sacq/srel errors
+sacq -, 0 ; srel -, 0
+
 # Test Expression failure
 add r0, r1, unknown1+unknown2
 
