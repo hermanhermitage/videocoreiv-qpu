@@ -473,21 +473,25 @@ function assemble(program, options) {
 					// If destination is -, make sure any implicit always condition changes to .never
 					if (wa == null) {
 						wa = 39;
+						/* todo: this messes up perfect bitmatch when reassembling disassembly
 						if (X==0) {
 							if (addcc == cc[""]) addcc = cc["never"];
 						}
 						else {
 							if (mulcc == cc[""]) mulcc = cc["never"];
 						}
+						*/
 					}
 					if (wb == null) {
 						wb = 39;
+						/* todo: this messes up perfect bitmatch when reassembling diassembly
 						if (X==0) {
 							if (mulcc == cc[""]) mulcc = cc["never"];
 						}
 						else {
 							if (addcc == cc[""]) addcc = cc["never"];
 						}
+						*/
 					}
 
 					packbits = unpack << 5 | packmode << 4 | pack;
@@ -1093,7 +1097,7 @@ if (typeof module != 'undefined' && module.exports && !module.parent) {
 
 	var options = {in:[]};
 	if (process.argv.length < 3) {
-		console.log(process.argv[0], process.argv[1], "[--showbits] [--dumpglobals] [--dumpsymbols] [--verbose] [--in]filename");
+		console.log(process.argv[0], process.argv[1], "[--showbits] [--dumpglobals] [--dumpsymbols] [--verbose] [--ignore-errors] [--strict-match] [--in]filename");
 	}
 	for (var i=2; i<process.argv.length; i++) {
 		if(process.argv[i].indexOf('--no-') == 0) {
