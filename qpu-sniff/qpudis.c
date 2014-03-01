@@ -192,7 +192,7 @@ const char *qpu_pack_add(uint32_t packmul, uint32_t pack, uint32_t wa, uint32_t 
 const char *qpu_pack_mul(uint32_t packmul, uint32_t pack, uint32_t wa, uint32_t X) {
 	if ((packmul == 0) && (X==1) && (wa<=32)) //todo: what is the real limit on ra range?
 		return dstpackmul[pack];
-	if ((packmul == 1))
+	if (packmul == 1)
 		return dstpackmul[pack];
 	return "";
 }
@@ -345,15 +345,23 @@ void show_qpu_imm32(uint32_t i0, uint32_t i1)
 			data, unpacking, packmul, packing, addcc, mulcc, F, X, wa, wb);
 	}
 
+	const char *inst = ops[(i1 >> 28) & 0xf];
+
+	if (unpacking & 0x4) {
+		inst = (data & 0x10) ? "sacq" : "srel";
+		if (data <= 0x1f)
+			data = data & 0xffffffef;
+	}
+
 	// addop: op[cc][setf] rd[.pack?], immediate
 	if (packbits==0 && addcc==0 && wa==39)
 		printf("nop");
 	else
-		printf("%s%s%s %s%s, %s", ops[(i1 >> 28) &0xf], cc[addcc], setf[F], qpu_w_add(wa, X), qpu_pack_add(packmul, packing, wa, X), qpu_ldi_unpack(unpacking, data));
+		printf("%s%s%s %s%s, %s", inst, cc[addcc], setf[F], qpu_w_add(wa, X), qpu_pack_add(packmul, packing, wa, X), qpu_ldi_unpack(unpacking, data));
 
 	// mulop: [op[cc][setf] rd[.pack?], immediate
 	if (mulcc) {
-		printf("; %s%s%s %s%s, %s", ops[(i1 >> 28) &0xf], cc[mulcc], setf[F], qpu_w_mul(wb, X), qpu_pack_mul(packmul, packing, wa, X), qpu_ldi_unpack(unpacking, data));
+		printf("; %s%s%s %s%s, %s", inst, cc[mulcc], setf[F], qpu_w_mul(wb, X), qpu_pack_mul(packmul, packing, wa, X), qpu_ldi_unpack(unpacking, data));
 	}
 
 	printf("\n");
