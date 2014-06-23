@@ -249,7 +249,7 @@ Where:
   ra is register bank A value to read.
     ra0..ra31 are registers, whilst ra32..ra63 are peripheral addresses.
     
-  rb is register bank Bvalue to read.
+  rb is register bank B value to read.
     rb0..rb31 are registers, whilst rb32..rb63 are peripheral addresses.
 
   wa is destination for the add or mul result (depends on X).
