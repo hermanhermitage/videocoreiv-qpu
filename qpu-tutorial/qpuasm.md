@@ -1,12 +1,21 @@
 ### Simple Assembler:
 A rudimentary assembler (very alpha at this stage, will improve with use).
-It needs Node.js to run (will target web page later).
+It needs Node.js or a browser to run.
 
 NOTE: Rotator and Pack/Unpack has now been added but is preliminary.
 
 #### Usage:
+##### Command Line:
 ```
   node[js] qpuasm.js [--showbits] [--dumpglobals] [--dumpsymbols] [--verbose] [--in]filename
+```
+##### Javascript Api:
+Changes `options` as necessary. All internal functions are included in the `assemble` object aswell.
+```
+  var assemble = require('./qpuasm.js'); //if using node
+  
+  var options = {showbits:true, dumpglobals:true, dumpsymbols:true, verbose:true};
+  assemble(file,options);
 ```
 
 #### Source Syntax:
