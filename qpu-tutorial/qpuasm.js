@@ -1121,37 +1121,38 @@ var assemble = (function(module){
 		}
 	
 	}else{
-		exports = assemble;
-		exports.acc_names = acc_names;
-		exports.banka_r = banka_r;
-		exports.bankb_r = bankb_r;
-		exports.banka_w = banka_w;
-		exports.bankb_w = bankb_w;
-		exports.addops = addops;
-		exports.mulops = mulops;
-		exports.ops = ops;
-		exports.arity = arity;
-		exports.instructionArgumentCount = instructionArgumentCount;
-		exports.cc = cc;
-		exports.bcc = bcc;
-		exports.imm = imm;
-		exports.pack_add = pack_add;
-		exports.pack_mul = pack_mul;
-		exports.unpack_add = unpack_add;
-		exports.unpack_mul = unpack_mul;
-		exports.mkReverseMap = mkReverseMap;
-		exports.mkEnum = mkEnum;
-		exports.isNumber = isNumber;
-		exports.toHex = toHex;
-		exports.rsplit = rsplit;
-		exports.splitOnFirst = splitOnFirst;
-		exports.trim = trim;
-		exports.evaluateExpr = evaluateExpr;
-		exports.error = error;
-		exports.evaluateSrc = evaluateSrc;
-		exports.evaluateRaPlusOff = evaluateRaPlusOff;
-		exports.fromQpuVector = fromQpuVector;
-		exports.instructionToParts = instructionToParts;
-		return exports
+		module = module || {};
+		module.exports = assemble;
+		module.exports.acc_names = acc_names;
+		module.exports.banka_r = banka_r;
+		module.exports.bankb_r = bankb_r;
+		module.exports.banka_w = banka_w;
+		module.exports.bankb_w = bankb_w;
+		module.exports.addops = addops;
+		module.exports.mulops = mulops;
+		module.exports.ops = ops;
+		module.exports.arity = arity;
+		module.exports.instructionArgumentCount = instructionArgumentCount;
+		module.exports.cc = cc;
+		module.exports.bcc = bcc;
+		module.exports.imm = imm;
+		module.exports.pack_add = pack_add;
+		module.exports.pack_mul = pack_mul;
+		module.exports.unpack_add = unpack_add;
+		module.exports.unpack_mul = unpack_mul;
+		module.exports.mkReverseMap = mkReverseMap;
+		module.exports.mkEnum = mkEnum;
+		module.exports.isNumber = isNumber;
+		module.exports.toHex = toHex;
+		module.exports.rsplit = rsplit;
+		module.exports.splitOnFirst = splitOnFirst;
+		module.exports.trim = trim;
+		module.exports.evaluateExpr = evaluateExpr;
+		module.exports.error = error;
+		module.exports.evaluateSrc = evaluateSrc;
+		module.exports.evaluateRaPlusOff = evaluateRaPlusOff;
+		module.exports.fromQpuVector = fromQpuVector;
+		module.exports.instructionToParts = instructionToParts;
+		return module.exports
 	}
 })(module);
