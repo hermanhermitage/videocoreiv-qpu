@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 		goto cleanup;
 	}
 	void *gpu_pointer = (void *)mem_lock(mb, handle);
-	void *arm_pointer = mapmem((unsigned)gpu_pointer+GPU_MEM_MAP, size);
+	void *arm_pointer = mapmem(BUS_TO_PHYS((unsigned)gpu_pointer+GPU_MEM_MAP), size);
 
 	unsigned *p = (unsigned *)arm_pointer;
 
