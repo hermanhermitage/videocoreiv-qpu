@@ -1,6 +1,10 @@
 videocoreiv-qpu
 ===============
 
+**NOTE** On 2014-02-28, Broadcom announced the release of full documentation for the VideoCore IV graphics core, and a complete source release of the graphics stack at https://www.raspberrypi.org/blog/a-birthday-present-from-broadcom/. Their release largely obsoletes the information contained here.  But we have left it here for historical reasons.
+
+***
+
 Fun and Games with the Videocoreiv Quad Processor Units
 
 The BCM2835 SoC (System on a Chip) in the RaspberryPi has the following significant computation units:
